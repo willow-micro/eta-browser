@@ -96,6 +96,7 @@ ipcMain.on("OpenBrowser", (event, arg) => {
             // Set preload script
             preload: VIEWER_WINDOW_PRELOAD_WEBPACK_ENTRY,
             // Enable <webview> tag
+            nodeIntegrationInSubFrames: true,
             webviewTag: true
         }
     });
@@ -132,4 +133,17 @@ ipcMain.on("OpenBrowser", (event, arg) => {
 
 ipcMain.on("Start", (event, arg) => {
     console.log("Start");
+});
+
+ipcMain.on("SendDOMDataFromViewerToMain", (event, arg) => {
+    // console.log(arg.coordinates.x + ", " + arg.coordinates.y);
+    // console.log(arg.type);
+    // console.log(arg.id);
+    // console.log(arg.content);
+    mainWindow.webContents.send(
+        // Channel name
+        "SendDOMDataFromMainToMainWindow",
+        // Data
+        arg
+    );
 });

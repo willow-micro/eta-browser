@@ -75,18 +75,36 @@ const menuTemplate = [
     },
     // Tools
     {
-        label: 'Tools',
+        label: 'Debug',
         submenu: [
             {
                 label: 'Open the DevTools of the webview...',
                 click: (menuItem, browserWindow, event) => {
                     // IPC Message Tx (to Renderer)
-                    browserWindow.webContents.send(
-                        // Channel name
-                        "OpenDevTools",
-                        // Data
-                        {}
-                    );
+                    if (browserWindow.webContents) {
+                        browserWindow.webContents.send(
+                            // Channel name
+                            "OpenDevTools",
+                            // Data
+                            {}
+                        );
+                    }
+                }
+            },
+            {
+                label: 'Send Dummy Data to the webview...',
+                click: (menuItem, browserWindow, event) => {
+                    // IPC Message Tx (to Renderer)
+                    if (browserWindow.webContents) {
+                        browserWindow.webContents.send(
+                            // Channel name
+                            "SendDataToWebView",
+                            // Data
+                            {
+                                data: "hoge"
+                            }
+                        );
+                    }
                 }
             }
         ]
