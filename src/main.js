@@ -15,7 +15,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 
 // Make windows object visible from entire the main script
 let mainWindow = null;
-let etaBrowserWindow = null;
+let viewerWindow = null;
 
 // Create the main window
 const createWindow = () => {
@@ -30,7 +30,7 @@ const createWindow = () => {
             nodeIntegration: false,
             contextIsolation: true,
             // Set preload script
-            preload: __dirname + '/preload.js'
+            preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY//__dirname + '/preload.js'
         }
     });
 
@@ -78,18 +78,18 @@ app.on('activate', () => {
 // IPC Message Rx (from Renderer)
 ipcMain.on("OpenBrowser", (event, arg) => {
     // Get URL
-    let etaBrowserURL = arg.url;
-    console.log("OpenBrowser URL: " + etaBrowserURL);
+    let viewerURL = arg.url;
+    console.log("OpenBrowser URL: " + viewerURL);
 
     // Make eta browser window
-    etaBrowserWindow = new BrowserWindow({
+    viewerWindow = new BrowserWindow({
         width: 800,
         height: 600
     });
-    etaBrowserWindow.loadURL(etaBrowserURL);
-    etaBrowserWindow.webContents.openDevTools();
-    etaBrowserWindow.on('closed', function() {
-        etaBrowserWindow = null;
+    viewerWindow.loadURL(viewerURL);
+    viewerWindow.webContents.openDevTools();
+    viewerWindow.on('closed', function() {
+        viewerWindow = null;
     });
 
     // Send Message
