@@ -23,8 +23,10 @@ const createWindow = () => {
     mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
+        minWidth: 800,
+        minHeight: 600,
         webPreferences: {
-            // Default value since Electron v12 (ContextBridge requires)
+            // Default value since Electron v12 (ContextBridge required for IPC)
             nodeIntegration: false,
             contextIsolation: true,
             // Set preload script
@@ -75,23 +77,8 @@ app.on('activate', () => {
 
 // IPC Message Rx (from Renderer)
 ipcMain.on("OpenBrowser", (event, arg) => {
-    // Check if the given url is valid
-    let etaBrowserURL = "";
-    try {
-        etaBrowserURL = new URL(arg.url);
-    } catch (_) {
-        mainWindow.webContents.send(
-            // Channel name
-            "AppMessage",
-            // Data
-            {
-                message: "URLが不正です",
-                type: "error"
-            }
-        );
-        return;
-    }
-
+    // Get URL
+    let etaBrowserURL = arg.url;
     console.log("OpenBrowser URL: " + etaBrowserURL);
 
     // Make eta browser window
@@ -104,6 +91,18 @@ ipcMain.on("OpenBrowser", (event, arg) => {
     etaBrowserWindow.on('closed', function() {
         etaBrowserWindow = null;
     });
+
+    // Send Message
+    mainWindow.webContents.send(
+        // Channel name
+        "AppMessage",
+        // Data
+        {
+            message: "コンテンツを開きました",
+            type: "info"
+        }
+    );
+
 });
 
 ipcMain.on("Start", (event, arg) => {

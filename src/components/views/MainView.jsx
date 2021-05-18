@@ -44,8 +44,20 @@ const MainView = () => {
 
     // onChanges
     const onBrowserURLChange = (event) => {
-        console.log(event.value);
         setBrowserURL(event.value);
+    };
+
+
+    // Validation Rules
+    const checkIfValueIsURL = (value) => {
+        // Check if the given url is valid
+        let url = "";
+        try {
+            url = new URL(value);
+        } catch (_) {
+            return "URLが不正です";
+        }
+        return true;
     };
 
 
@@ -59,20 +71,23 @@ const MainView = () => {
     // JSX
     return (
         <div style={{ display: 'flex', flexFlow: 'column', justifyContent: 'space-between' }}>
-          {/* Debug */}
+          {/* Title */}
           <H4>コンソール</H4>
+          {/* Content URL */}
           <Card style={{ margin: '4px' }}>
             <CardContent>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <H6>Webコンテンツ</H6>
-                <TextField label="対象のURL" value={browserURL} onChange={onBrowserURLChange} hideExtra={true}/>
+                <TextField label="対象のURL" value={browserURL} onChange={onBrowserURLChange} rules={[ checkIfValueIsURL ]} hideExtra={false} width={450} />
               </div>
             </CardContent>
           </Card>
+          {/* Buttons */}
           <div style={{ padding: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Button onClick={onOpenBrowserButton} style={{ margin: '4px' }}>ブラウザを開く</Button>
             <Button onClick={onStartButton} style={{ margin: '4px' }}>計測開始</Button>
           </div>
+          {/* Application Message */}
           <Alert inset type={appMessageType} border='top' style={{ margin: '4px' }}>
             {appMessage}
           </Alert>
