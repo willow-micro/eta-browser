@@ -42,11 +42,11 @@ module.exports = [
         }
     },
     {
-        test: /\.(woff|woff2|eot|ttf|svg)(\?v=\d+\.\d+\.\d+)?$/,
+        test: /\.(woff|woff2|eot|ttf)?$/,
         use: {
             loader: 'file-loader',
             options: {
-                name: '[name].[ext]',
+                name: '[path][name].[ext]',
                 outputPath: 'fonts/'
             }
         }

@@ -17,6 +17,7 @@ const MainView = () => {
 
     const [domType, setDomType] = useState("");
     const [domId, setDomId] = useState("");
+    const [domClassName, setDomClassName] = useState("");
     //const [domContent, setDomContent] = useState("");
     //const [domCoordinateX, setDomCoordinateX] = useState(0);
     //const [domCoordinateY, setDomCoordinateY] = useState(0);
@@ -87,9 +88,11 @@ const MainView = () => {
         //console.log(arg.coordinates.x + ", " + arg.coordinates.y);
         console.log(arg.type);
         console.log(arg.id);
+        console.log(arg.className);
         //console.log(arg.content);
-        setDomId(arg.id);
         setDomType(arg.type);
+        setDomId(arg.id);
+        setDomClassName(arg.className);
         //setDomContent(arg.content);
         //setDomCoordinateX(arg.coordinates.x);
         //setDomCoordinateY(arg.coordinates.y);
@@ -154,10 +157,18 @@ const MainView = () => {
                     </CardContent>
                   </Card>
                 </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Subtitle2>ClassName</Subtitle2>
+                  <Card inset style={{ margin: '6px' }} width={500}>
+                    <CardContent>
+                      <Body1 style={{ textAlign: 'right' }}>{domClassName}</Body1>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </CardContent>
           </Card>
-              </div>
+        </div>
     );
 };
 

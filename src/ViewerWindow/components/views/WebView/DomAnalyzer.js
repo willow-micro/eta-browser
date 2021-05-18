@@ -30,6 +30,7 @@ document.addEventListener('mousemove', (event) => {
         let elem = document.elementFromPoint(event.clientX, event.clientY);
         console.log("type: " + elem.tagName);
         console.log("id: " + elem.id);
+        console.log("id: " + elem.className);
         console.log("content: " + elem.innerHTML);
         ipcRenderer.sendToHost(
             "SendDOMDataFromWebViewToViewer",
@@ -40,6 +41,7 @@ document.addEventListener('mousemove', (event) => {
                 },
                 type: elem.tagName,
                 id: elem.id,
+                className: elem.className,
                 content: elem.innerHTML
             }
         );

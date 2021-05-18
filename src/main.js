@@ -139,6 +139,7 @@ ipcMain.on("SendDOMDataFromViewerToMain", (event, arg) => {
     // console.log(arg.coordinates.x + ", " + arg.coordinates.y);
     // console.log(arg.type);
     // console.log(arg.id);
+    // console.log(arg.className);
     // console.log(arg.content);
     mainWindow.webContents.send(
         // Channel name

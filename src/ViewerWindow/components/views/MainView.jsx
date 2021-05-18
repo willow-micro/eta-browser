@@ -40,13 +40,15 @@ const MainView = () => {
                         console.log(event.args[0].coordinates.x + ", " + event.args[0].coordinates.y);
                         console.log(event.args[0].type);
                         console.log(event.args[0].id);
+                        console.log(event.args[0].className);
                         console.log(event.args[0].content);
                         window.viewerIPCSend(
                             "SendDOMDataFromViewerToMain",
                             //event.args[0]
                             {
                                 type: event.args[0].type,
-                                id: event.args[0].id
+                                id: event.args[0].id,
+                                className: event.args[0].className
                             }
                         );
                         break;
