@@ -13,8 +13,11 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
     app.quit();
 }
 
+// Make windows object visible from entire the main script
+let mainWindow = null;
+let etaBrowserWindow = null;
 
-let mainWindow = null;          // Make the mainWindow visible from entire the main script
+// Create the main window
 const createWindow = () => {
     // Create the browser window.
     mainWindow = new BrowserWindow({
@@ -71,9 +74,38 @@ app.on('activate', () => {
 // code. You can also put them in separate files and import them here.
 
 // IPC Message Rx (from Renderer)
-ipcMain.on("msg_render_to_main_ch1", (event, arg) => {
-    console.log("Msg(R->M, Ch1): " + arg);
+ipcMain.on("OpenBrowser", (event, arg) => {
+    // Check if the given url is valid
+    let etaBrowserURL = "";
+    try {
+        etaBrowserURL = new URL(arg.url);
+    } catch (_) {
+        mainWindow.webContents.send(
+            // Channel name
+            "AppMessage",
+            // Data
+            {
+                message: "URLが不正です",
+                type: "error"
+            }
+        );
+        return;
+    }
+
+    console.log("OpenBrowser URL: " + etaBrowserURL);
+
+    // Make eta browser window
+    etaBrowserWindow = new BrowserWindow({
+        width: 800,
+        height: 600
+    });
+    etaBrowserWindow.loadURL(etaBrowserURL);
+    etaBrowserWindow.webContents.openDevTools();
+    etaBrowserWindow.on('closed', function() {
+        etaBrowserWindow = null;
+    });
 });
-ipcMain.on("msg_render_to_main_ch2", (event, arg) => {
-    console.log("Msg(R->M, Ch2): " + arg);
+
+ipcMain.on("Start", (event, arg) => {
+    console.log("Start");
 });

@@ -1,8 +1,8 @@
 {
   "name": "eta-browser",
-  "productName": "eta-browser",
+  "productName": "ETA Browser",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "Eye-Tracking-Analysis Browser",
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
