@@ -85,17 +85,24 @@ const MainView = () => {
             <CardContent>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <H6>Webコンテンツ</H6>
-                <TextField label="対象のURL" value={browserURL} onChange={onBrowserURLChange} rules={[ checkIfValueIsURL ]} hideExtra={false} width={450} />
+                <TextField label="対象のURL"
+                           value={browserURL}
+                           onChange={onBrowserURLChange}
+                           rules={[ checkIfValueIsURL ]}
+                           hideExtra={false} width={450} />
               </div>
             </CardContent>
           </Card>
           {/* Buttons */}
           <div style={{ padding: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Button onClick={onOpenBrowserButton} style={{ margin: '4px' }}>ブラウザを開く</Button>
-            <Button onClick={onStartButton} style={{ margin: '4px' }}>計測開始</Button>
+            <Button onClick={onOpenBrowserButton}
+                    style={{ margin: '4px' }}>ブラウザを開く</Button>
+            <Button onClick={onStartButton}
+                    style={{ margin: '4px' }}>計測開始</Button>
           </div>
           {/* Application Message */}
-          <Alert inset type={appMessageType} border='top' style={{ margin: '4px' }}>
+          <Alert inset type={appMessageType}
+                 border='top' style={{ margin: '4px' }}>
             {appMessage}
           </Alert>
         </div>

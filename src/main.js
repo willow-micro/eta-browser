@@ -85,8 +85,8 @@ ipcMain.on("OpenBrowser", (event, arg) => {
     viewerWindow = new BrowserWindow({
         width: 800,
         height: 600,
-        x: mainWindow.getPosition()[0] + 10,
-        y: mainWindow.getPosition()[1] + 10,
+        x: mainWindow.getPosition()[0] + 24,
+        y: mainWindow.getPosition()[1] + 24,
         webPreferences: {
             // Default value since Electron v12
             nodeIntegration: false,

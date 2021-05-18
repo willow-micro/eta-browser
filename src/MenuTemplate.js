@@ -33,22 +33,6 @@ const menuTemplate = [
     {
         label: 'Edit',
         submenu: [
-            {
-                label: 'SendDummyURL',
-                click: (menuItem, browserWindow, event) => {
-                    // Dummy data
-                    const data = "https://google.com";
-                    // IPC Message Tx (to Renderer)
-                    browserWindow.webContents.send(
-                        // Channel name
-                        "ViewerURL",
-                        // Data
-                        {
-                            url: data
-                        }
-                    );
-                }
-            },
             { role: 'undo' },
             { role: 'redo' },
             { type: 'separator' },
@@ -87,6 +71,24 @@ const menuTemplate = [
             { role: 'zoomOut' },
             { type: 'separator' },
             { role: 'togglefullscreen' }
+        ]
+    },
+    // Tools
+    {
+        label: 'Tools',
+        submenu: [
+            {
+                label: 'Open the DevTools of the webview...',
+                click: (menuItem, browserWindow, event) => {
+                    // IPC Message Tx (to Renderer)
+                    browserWindow.webContents.send(
+                        // Channel name
+                        "OpenDevTools",
+                        // Data
+                        {}
+                    );
+                }
+            }
         ]
     },
     // { role: 'windowMenu' }
