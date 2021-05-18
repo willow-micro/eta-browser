@@ -19,7 +19,7 @@ const createWindow = () => {
         webPreferences: {
             // Default value since Electron v12 (ContextBridge requires)
             nodeIntegration: false,
-            contextIsolation: false, //true,
+            contextIsolation: true,
             // Set preload script
             preload: __dirname + '/preload.js'
         }

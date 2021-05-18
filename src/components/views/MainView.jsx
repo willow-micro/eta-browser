@@ -14,7 +14,7 @@ const MainView = () => {
 
     const onStartButton = () => {
         console.log("Pressed");
-        window.MyIPCSend("Pressed");
+        window.api.send("Pressed");
     };
 
     // JSX
