@@ -12,6 +12,11 @@ const MainView = () => {
     useEffect(() => {
     }, []);
 
+    const onStartButton = () => {
+        console.log("Pressed");
+        window.MyIPCSend("Pressed");
+    };
+
     // JSX
     return (
         <React.Fragment>
@@ -25,7 +30,7 @@ const MainView = () => {
               </div>
             </CardContent>
           </Card>
-          <Button style={{ margin: '4px' }}>実験開始...</Button>
+          <Button onClick={onStartButton} style={{ margin: '4px' }}>実験開始...</Button>
         </React.Fragment>
     );
 };
