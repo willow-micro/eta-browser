@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Mousemove
 document.addEventListener('mousemove', (event) => {
-    if (Math.abs(previousCorrdinates.x - event.clientX) > 20 ||
-        Math.abs(previousCorrdinates.y - event.clientY) > 20) {
+    if (Math.abs(previousCorrdinates.x - event.clientX) > 10 ||
+        Math.abs(previousCorrdinates.y - event.clientY) > 10) {
         let elem = document.elementFromPoint(event.clientX, event.clientY);
         console.log("type: " + elem.tagName);
         console.log("id: " + elem.id);

@@ -32,7 +32,6 @@ const MainView = () => {
     const webViewEl = useRef(null);
 
     // useEffect
-    let previousContent = "";
     useEffect(() => {
         if (webViewEl && webViewEl.current) {
             webViewEl.current.addEventListener("ipc-message", (event) => {
@@ -42,16 +41,14 @@ const MainView = () => {
                         console.log(event.args[0].type);
                         console.log(event.args[0].id);
                         console.log(event.args[0].content);
-                        if (previousContent !== event.args[0].content) {
-                            window.viewerIPCSend(
-                                "SendDOMDataFromViewerToMain",
-                                //event.args[0]
-                                {
-                                    type: event.args[0].type,
-                                    id: event.args[0].id
-                                }
-                            );
-                        }
+                        window.viewerIPCSend(
+                            "SendDOMDataFromViewerToMain",
+                            //event.args[0]
+                            {
+                                type: event.args[0].type,
+                                id: event.args[0].id
+                            }
+                        );
                         break;
                     default:
                         console.log("ch: " + event.channel + ", args: " + event.args);
