@@ -57,6 +57,14 @@
                                     "preload": {
                                         "js": "./src/MainWindow/preload.js"
                                     }
+                                },
+                                {
+                                    "html": "./src/ViewerWindow/index.html",
+                                    "js": "./src/ViewerWindow/renderer.js",
+                                    "name": "viewer_window",
+                                    "preload": {
+                                        "js": "./src/ViewerWindow/preload.js"
+                                    }
                                 }
                             ]
                         }

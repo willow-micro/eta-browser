@@ -30,7 +30,7 @@ const createWindow = () => {
             nodeIntegration: false,
             contextIsolation: true,
             // Set preload script
-            preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY//__dirname + '/preload.js'
+            preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY
         }
     });
 
@@ -84,9 +84,17 @@ ipcMain.on("OpenBrowser", (event, arg) => {
     // Make eta browser window
     viewerWindow = new BrowserWindow({
         width: 800,
-        height: 600
+        height: 600,
+        webPreferences: {
+            // Default value since Electron v12 (ContextBridge required for IPC)
+            nodeIntegration: false,
+            contextIsolation: true,
+            // Set preload script
+            preload: VIEWER_WINDOW_PRELOAD_WEBPACK_ENTRY
+        }
     });
-    viewerWindow.loadURL(viewerURL);
+    //viewerWindow.loadURL(viewerURL);
+    viewerWindow.loadURL(VIEWER_WINDOW_WEBPACK_ENTRY);
     viewerWindow.webContents.openDevTools();
     viewerWindow.on('closed', function() {
         viewerWindow = null;
