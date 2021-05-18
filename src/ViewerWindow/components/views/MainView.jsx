@@ -6,19 +6,24 @@ import React, { useState, useEffect } from 'react';
 const MainView = () => {
 
     // useState
+    const [viewerUrl, setViewerUrl] = useState("");
 
 
     // useEffect
 
 
     // IPC Message Rx (from Main)
+    window.viewerIPCOn("ViewerURL", (event, arg) => {
+        console.log(arg.url);
+        setViewerUrl(arg.url);
+    });
 
 
     // JSX
     return (
         <React.Fragment>
           {/* WebView */}
-          <div>Viewer</div>
+          {( viewerUrl !== "" ) && <webview src={viewerUrl} style={{ height: '100%', width: '100%' }} />}
         </React.Fragment>
     );
 };

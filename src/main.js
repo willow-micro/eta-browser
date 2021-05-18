@@ -85,19 +85,36 @@ ipcMain.on("OpenBrowser", (event, arg) => {
     viewerWindow = new BrowserWindow({
         width: 800,
         height: 600,
+        x: mainWindow.getPosition()[0] + 10,
+        y: mainWindow.getPosition()[1] + 10,
         webPreferences: {
-            // Default value since Electron v12 (ContextBridge required for IPC)
+            // Default value since Electron v12
             nodeIntegration: false,
-            contextIsolation: true,
+            // Default is true, but it should be false because the viewer window have <webview> tag
+            // So, Viewer Window CANNOT USE ContextBridge.
+            contextIsolation: false, //true,
             // Set preload script
-            preload: VIEWER_WINDOW_PRELOAD_WEBPACK_ENTRY
+            preload: VIEWER_WINDOW_PRELOAD_WEBPACK_ENTRY,
+            // Enable <webview> tag
+            webviewTag: true
         }
     });
-    //viewerWindow.loadURL(viewerURL);
     viewerWindow.loadURL(VIEWER_WINDOW_WEBPACK_ENTRY);
     viewerWindow.webContents.openDevTools();
     viewerWindow.on('closed', function() {
         viewerWindow = null;
+    });
+
+    // Send Destination URL when the viewer window is ready
+    viewerWindow.webContents.once('dom-ready', () => {
+        viewerWindow.webContents.send(
+            // Channel name
+            "ViewerURL",
+            // Data
+            {
+                url: viewerURL
+            }
+        );
     });
 
     // Send Message

@@ -12,6 +12,7 @@ const MainView = () => {
     const [appMessage, setAppMessage] = useState("Welcome");
     const [appMessageType, setAppMessageType] = useState("info");
     const [browserURL, setBrowserURL] = useState("");
+    const [isBrowserURLValid, setIsBrowserURLValid] = useState(false);
 
 
     // useEffect
@@ -22,14 +23,18 @@ const MainView = () => {
     // onClicks
     const onOpenBrowserButton = () => {
         console.log("OpenBrowserButton");
-        window.api.send(
-            // Channel
-            "OpenBrowser",
-            // Data
-            {
-                url: browserURL
-            }
-        );
+        if (isBrowserURLValid) {
+            window.api.send(
+                // Channel
+                "OpenBrowser",
+                // Data
+                {
+                    url: browserURL
+                }
+            );
+        } else {
+            console.log("URL is invalid")
+        }
     };
     const onStartButton = () => {
         console.log("StartButton");
@@ -55,8 +60,10 @@ const MainView = () => {
         try {
             url = new URL(value);
         } catch (_) {
+            setIsBrowserURLValid(false);
             return "URLが不正です";
         }
+        setIsBrowserURLValid(true);
         return true;
     };
 

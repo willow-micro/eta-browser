@@ -33,22 +33,22 @@ const menuTemplate = [
     {
         label: 'Edit',
         submenu: [
-            // {
-            //     label: 'Greeting',
-            //     click: (menuItem, browserWindow, event) => {
-            //         // Dummy data
-            //         const data = "Hi from Main";
-            //         // IPC Message Tx (to Renderer)
-            //         browserWindow.webContents.send(
-            //             // Channel name
-            //             "Greeting",
-            //             // Data
-            //             {
-            //                 data: data
-            //             }
-            //         );
-            //     }
-            // },
+            {
+                label: 'SendDummyURL',
+                click: (menuItem, browserWindow, event) => {
+                    // Dummy data
+                    const data = "https://google.com";
+                    // IPC Message Tx (to Renderer)
+                    browserWindow.webContents.send(
+                        // Channel name
+                        "ViewerURL",
+                        // Data
+                        {
+                            url: data
+                        }
+                    );
+                }
+            },
             { role: 'undo' },
             { role: 'redo' },
             { type: 'separator' },
