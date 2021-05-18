@@ -1,9 +1,11 @@
 // -*- coding: utf-8-unix -*-
 // Electron Main Process Script
 
-
-const { electron, app, BrowserWindow, ipcMain } = require('electron');
+// System
+const { electron, app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
+// User
+const menuTemplate = require('./MenuTemplate.js');
 
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -11,9 +13,11 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
     app.quit();
 }
 
+
+let mainWindow = null;          // Make the mainWindow visible from entire the main script
 const createWindow = () => {
     // Create the browser window.
-    const mainWindow = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
         webPreferences: {
@@ -25,11 +29,20 @@ const createWindow = () => {
         }
     });
 
+    // Set template
+    const menu = Menu.buildFromTemplate(menuTemplate);
+    Menu.setApplicationMenu(menu);
+
     // and load the index.html of the app.
     mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
     // Open the DevTools.
     mainWindow.webContents.openDevTools();
+
+    // When the main window is closed, back it to a null object.
+    mainWindow.on('closed', function() {
+        mainWindow = null;
+    });
 };
 
 // This method will be called when Electron has finished
@@ -57,7 +70,10 @@ app.on('activate', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
 
-// IPC Message Rx
-ipcMain.on("msg_render_to_main", (event, arg) => {
-    console.log("Msg(R->M): " + arg); //printing "good job"
+// IPC Message Rx (from Renderer)
+ipcMain.on("msg_render_to_main_ch1", (event, arg) => {
+    console.log("Msg(R->M, Ch1): " + arg);
+});
+ipcMain.on("msg_render_to_main_ch2", (event, arg) => {
+    console.log("Msg(R->M, Ch2): " + arg);
 });
