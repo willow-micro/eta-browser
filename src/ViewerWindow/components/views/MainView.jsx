@@ -42,13 +42,18 @@ const MainView = () => {
                         console.log(event.args[0].id);
                         console.log(event.args[0].className);
                         console.log(event.args[0].content);
+                        console.log(event.args[0].role);
+                        console.log(event.args[0].ariaLabel);
+
                         window.viewerIPCSend(
                             "SendDOMDataFromViewerToMain",
                             //event.args[0]
                             {
                                 type: event.args[0].type,
                                 id: event.args[0].id,
-                                className: event.args[0].className
+                                className: event.args[0].className,
+                                role: event.args[0].role,
+                                ariaLabel: event.args[0].ariaLabel
                             }
                         );
                         break;

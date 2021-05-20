@@ -28,10 +28,14 @@ document.addEventListener('mousemove', (event) => {
     if (Math.abs(previousCorrdinates.x - event.clientX) > 10 ||
         Math.abs(previousCorrdinates.y - event.clientY) > 10) {
         let elem = document.elementFromPoint(event.clientX, event.clientY);
+
         console.log("type: " + elem.tagName);
         console.log("id: " + elem.id);
         console.log("id: " + elem.className);
         console.log("content: " + elem.innerHTML);
+        console.log("role: " + elem.getAttribute("role"));
+        console.log("aria-label: " + elem.ariaLabel);
+
         ipcRenderer.sendToHost(
             "SendDOMDataFromWebViewToViewer",
             {
@@ -42,7 +46,9 @@ document.addEventListener('mousemove', (event) => {
                 type: elem.tagName,
                 id: elem.id,
                 className: elem.className,
-                content: elem.innerHTML
+                content: elem.innerHTML,
+                role: elem.getAttribute("role"),
+                ariaLabel: elem.ariaLabel
             }
         );
         previousCorrdinates.x = event.clientX;

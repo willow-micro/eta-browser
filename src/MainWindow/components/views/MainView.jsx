@@ -18,6 +18,8 @@ const MainView = () => {
     const [domType, setDomType] = useState("");
     const [domId, setDomId] = useState("");
     const [domClassName, setDomClassName] = useState("");
+    const [domRole, setDomRole] = useState("");
+    const [domAriaLabel, setDomAriaLabel] = useState("");
     //const [domContent, setDomContent] = useState("");
     //const [domCoordinateX, setDomCoordinateX] = useState(0);
     //const [domCoordinateY, setDomCoordinateY] = useState(0);
@@ -89,10 +91,14 @@ const MainView = () => {
         console.log(arg.type);
         console.log(arg.id);
         console.log(arg.className);
+        console.log(arg.role);
+        console.log(arg.ariaLabel);
         //console.log(arg.content);
         setDomType(arg.type);
         setDomId(arg.id);
         setDomClassName(arg.className);
+        setDomRole(arg.role);
+        setDomAriaLabel(arg.ariaLabel);
         //setDomContent(arg.content);
         //setDomCoordinateX(arg.coordinates.x);
         //setDomCoordinateY(arg.coordinates.y);
@@ -162,6 +168,22 @@ const MainView = () => {
                   <Card inset style={{ margin: '6px' }} width={500}>
                     <CardContent>
                       <Body1 style={{ textAlign: 'right' }}>{domClassName}</Body1>
+                    </CardContent>
+                  </Card>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Subtitle2>Role</Subtitle2>
+                  <Card inset style={{ margin: '6px' }} width={500}>
+                    <CardContent>
+                      <Body1 style={{ textAlign: 'right' }}>{domRole}</Body1>
+                    </CardContent>
+                  </Card>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Subtitle2>ARIA Label</Subtitle2>
+                  <Card inset style={{ margin: '6px' }} width={500}>
+                    <CardContent>
+                      <Body1 style={{ textAlign: 'right' }}>{domAriaLabel}</Body1>
                     </CardContent>
                   </Card>
                 </div>
