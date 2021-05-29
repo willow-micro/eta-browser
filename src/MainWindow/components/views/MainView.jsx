@@ -57,6 +57,15 @@ const MainView = () => {
             {}
         );
     };
+    const onStopButton = () => {
+        console.log("StopButton");
+        window.api.send(
+            // Channel
+            "Stop",
+            // Data
+            {}
+        );
+    };
 
 
     // onChanges
@@ -130,8 +139,9 @@ const MainView = () => {
             <Button onClick={onOpenBrowserButton}
                     style={{ margin: '6px' }}>ブラウザを開く</Button>
             <Button onClick={onStartButton}
-                    x                    style={{ margin: '6px' }}
-                    disabled>計測開始</Button>
+                    style={{ margin: '6px' }}>計測開始</Button>
+            <Button onClick={onStopButton}
+                    style={{ margin: '6px' }}>計測終了</Button>
           </div>
           {/* Application Message */}
           <Card style={{ margin: '6px' }}>

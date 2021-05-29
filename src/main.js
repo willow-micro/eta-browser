@@ -7,7 +7,6 @@ const path = require('path');
 // User
 const menuTemplate = require('./MenuTemplate.js');
 
-
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
     app.quit();
@@ -16,6 +15,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 // Make windows object visible from entire the main script
 let mainWindow = null;
 let viewerWindow = null;
+
 
 // Create the main window
 const createWindow = () => {
@@ -89,7 +89,8 @@ ipcMain.on("OpenBrowser", (event, arg) => {
         y: mainWindow.getPosition()[1] + 24,
         webPreferences: {
             // Default value since Electron v12
-            nodeIntegration: false,
+            //nodeIntegration: false,
+            nodeIntegration: true,
             // Default is true, but it should be false because the viewer window have <webview> tag
             // So, Viewer Window CANNOT USE ContextBridge.
             contextIsolation: false, //true,
@@ -118,7 +119,7 @@ ipcMain.on("OpenBrowser", (event, arg) => {
         );
     });
 
-    // Send Message
+    // Send App Message
     mainWindow.webContents.send(
         // Channel name
         "AppMessage",
@@ -133,6 +134,21 @@ ipcMain.on("OpenBrowser", (event, arg) => {
 
 ipcMain.on("Start", (event, arg) => {
     console.log("Start");
+    viewerWindow.webContents.send(
+        // Channel name
+        "Start",
+        // Data
+        {}
+    );
+});
+ipcMain.on("Stop", (event, arg) => {
+    console.log("Stop");
+    viewerWindow.webContents.send(
+        // Channel name
+        "Stop",
+        // Data
+        {}
+    );
 });
 
 ipcMain.on("SendDOMDataFromViewerToMain", (event, arg) => {
@@ -144,6 +160,15 @@ ipcMain.on("SendDOMDataFromViewerToMain", (event, arg) => {
     mainWindow.webContents.send(
         // Channel name
         "SendDOMDataFromMainToMainWindow",
+        // Data
+        arg
+    );
+});
+
+ipcMain.on("AppMessage", (event, arg) => {
+    mainWindow.webContents.send(
+        // Channel name
+        "AppMessage",
         // Data
         arg
     );
