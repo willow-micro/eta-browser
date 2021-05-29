@@ -1,87 +1,7 @@
 // System
 import React, { useCallback, useState, useRef, useEffect } from 'react';
-const fs = require('fs');
-const { desktopCapturer } = require('electron');
 // User
-
-
-// Objects for Desktop Capturing
-let streamRecorder = null;
-let recordedChunks = [];
-
-const handleCaptureStream = (captureStream) => {
-    console.log("handleCaptureStream");
-    streamRecorder = new MediaRecorder(captureStream);
-    streamRecorder.ondataavailable = (event) => {
-        recordedChunks.push(event.data);
-    };
-    streamRecorder.onstop = (event) => {
-        // Create Blob
-        const captureBlob = new Blob(recordedChunks, {type: 'video/webm'});
-        recordedChunks = [];
-        // Setup FileReader
-        const fileReader = new FileReader();
-        fileReader.onload = () => {
-            // Create Buffer from Binary
-            const binary = fileReader.result;
-            let binaryArray = new Uint8Array(binary);
-            let buffer = new Buffer(binary.byteLength);
-            for (let i = 0; i < binaryArray.byteLength; i = (i+1)|0) { // Optimized for V8 Engine
-                buffer[i] = binaryArray[i];
-            }
-            // Write File
-            const filename = "./test.webm";
-            fs.writeFile(filename, buffer, (error) => {
-                if (error) {
-                    console.log("Error in save desktopCapture");
-                    console.log(error);
-                    // Send App Message
-                    window.viewerIPCSend(
-                        "AppMessage",
-                        {
-                            message: "キャプチャを保存できません",
-                            type: "error"
-                        }
-                    );
-                } else {
-                    // Success
-                    console.log("Successfully Saved a Captured Video");
-                    // Send App Message
-                    window.viewerIPCSend(
-                        // Channel name
-                        "AppMessage",
-                        // Data
-                        {
-                            message: "キャプチャを保存しました",
-                            type: "success"
-                        }
-                    );
-                }
-            });
-        };
-        // Execute FileReader
-        fileReader.readAsArrayBuffer(captureBlob);
-        // Close streamRecorder
-        streamRecorder = null;
-    };
-    streamRecorder.start();
-};
-
-const handleCaptureStreamError = (error) => {
-    console.log("Error in start desktopCapture");
-    console.log(error);
-    // Send App Message
-    window.viewerIPCSend(
-        // Channel name
-        "AppMessage",
-        // Data
-        {
-            message: "キャプチャを開始できません",
-            type: "error"
-        }
-    );
-};
-
+import Capturer from '../../Capturer.js';
 
 // Sub Component
 const WebView = React.forwardRef((props, ref) => {
@@ -104,6 +24,8 @@ const WebView = React.forwardRef((props, ref) => {
 
 // Main Component
 const MainView = () => {
+
+    const capturer = new Capturer("ETA Browser (Viewer)");
 
     // useState
     const [viewerUrl, setViewerUrl] = useState("");
@@ -173,33 +95,11 @@ const MainView = () => {
     });
     window.viewerIPCOn("Start", (event, arg) => {
         console.log("Start");
-        // Start Desktop Capturing
-        desktopCapturer.getSources({ types: ['window', 'screen'] }).then(async sources => {
-            for (const source of sources) {
-                if (source.name === "ETA Browser (Viewer)") {
-                    navigator.mediaDevices.getUserMedia({
-                        audio: false,
-                        video: {
-                            mandatory: {
-                                chromeMediaSource: 'desktop',
-                                chromeMediaSourceId: source.id,
-                                minWidth: 1024,
-                                maxWidth: 2560,
-                                minHeight: 720,
-                                maxHeight: 1600
-                            }
-                        }
-                    }).then((stream) => { handleCaptureStream(stream) })
-                             .catch((error) => { handleCaptureStreamError(error) });
-                }
-            }
-        });
+        capturer.start();
     });
     window.viewerIPCOn("Stop", (event, arg) => {
         console.log("Stop");
-        // Stop Desktop Capturing
-        streamRecorder.stop();
-        streamRecorder = null;
+        capturer.stop();
     });
 
     // JSX
