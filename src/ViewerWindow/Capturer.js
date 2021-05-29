@@ -3,15 +3,15 @@
 
 // System
 // This is Unsafe, requires to make nodeIntegration true.
-const fs = require('fs');
 const { desktopCapturer } = require('electron');
 
 // User
 
 class Capturer {
-    constructor(windowTitle) {
+    constructor(windowTitle, receiveChannel) {
         // Variables for Desktop Capturing
         this.targetWindowTitle = windowTitle;
+        this.receiveChannel = receiveChannel;
         this.streamRecorder = null;
         this.recordedChunks = [];
 
@@ -35,35 +35,15 @@ class Capturer {
                     for (let i = 0; i < binaryArray.byteLength; i = (i+1)|0) { // Optimized for V8 Engine
                         buffer[i] = binaryArray[i];
                     }
-                    // Write File
-                    const filename = "./test.webm";
-                    fs.writeFile(filename, buffer, (error) => {
-                        if (error) {
-                            console.log("Error in save desktopCapture");
-                            console.log(error);
-                            // Send App Message
-                            window.viewerIPCSend(
-                                "AppMessage",
-                                {
-                                    message: "キャプチャを保存できません",
-                                    type: "error"
-                                }
-                            );
-                        } else {
-                            // Success
-                            console.log("Successfully Saved a Captured Video");
-                            // Send App Message
-                            window.viewerIPCSend(
-                                // Channel name
-                                "AppMessage",
-                                // Data
-                                {
-                                    message: "キャプチャを保存しました",
-                                    type: "success"
-                                }
-                            );
+                    // Send Buffer
+                    window.viewerIPCSend(
+                        // Channel name
+                        this.receiveChannel,
+                        // Data
+                        {
+                            buffer: buffer
                         }
-                    });
+                    );
                 };
                 // Execute FileReader
                 fileReader.readAsArrayBuffer(captureBlob);

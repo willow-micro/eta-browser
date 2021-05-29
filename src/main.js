@@ -4,6 +4,7 @@
 // System
 const { electron, app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
+const fs = require('fs');
 // User
 const menuTemplate = require('./MenuTemplate.js');
 
@@ -88,8 +89,7 @@ ipcMain.on("OpenBrowser", (event, arg) => {
         x: mainWindow.getPosition()[0] + 24,
         y: mainWindow.getPosition()[1] + 24,
         webPreferences: {
-            // Default value since Electron v12
-            //nodeIntegration: false,
+            // Default value since Electron v12 is false for prevent XSS. But desktopCapturer requires true
             nodeIntegration: true,
             // Default is true, but it should be false because the viewer window have <webview> tag
             // So, Viewer Window CANNOT USE ContextBridge.
@@ -150,6 +150,40 @@ ipcMain.on("Stop", (event, arg) => {
         {}
     );
 });
+ipcMain.on("SaveBufferToFile", (event, arg) => {
+    console.log("SaveBufferToFile");
+    const buffer = arg.buffer;
+    // Write File
+    const filename = "./test.webm";
+    fs.writeFile(filename, buffer, (error) => {
+        if (error) {
+            console.log("Error in save desktopCapture");
+            console.log(error);
+            // Send App Message
+            mainWindow.webContents.send(
+                "AppMessage",
+                {
+                    message: "キャプチャを保存できません",
+                    type: "error"
+                }
+            );
+        } else {
+            // Success
+            console.log("Successfully Saved a Captured Video");
+            // Send App Message
+            mainWindow.webContents.send(
+                // Channel name
+                "AppMessage",
+                // Data
+                {
+                    message: "キャプチャを保存しました",
+                    type: "success"
+                }
+            );
+        }
+    });
+});
+
 
 ipcMain.on("SendDOMDataFromViewerToMain", (event, arg) => {
     // console.log(arg.coordinates.x + ", " + arg.coordinates.y);

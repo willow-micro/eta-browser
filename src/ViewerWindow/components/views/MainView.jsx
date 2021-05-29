@@ -25,7 +25,7 @@ const WebView = React.forwardRef((props, ref) => {
 // Main Component
 const MainView = () => {
 
-    const capturer = new Capturer("ETA Browser (Viewer)");
+    const capturer = new Capturer("ETA Browser (Viewer)", "SaveBufferToFile");
 
     // useState
     const [viewerUrl, setViewerUrl] = useState("");
