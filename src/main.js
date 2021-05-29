@@ -2,7 +2,7 @@
 // Electron Main Process Script
 
 // System
-const { electron, app, BrowserWindow, ipcMain, Menu } = require('electron');
+const { electron, app, BrowserWindow, ipcMain, Menu, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 // User
@@ -154,32 +154,46 @@ ipcMain.on("SaveBufferToFile", (event, arg) => {
     console.log("SaveBufferToFile");
     const buffer = arg.buffer;
     // Write File
-    const filename = "./test.webm";
-    fs.writeFile(filename, buffer, (error) => {
-        if (error) {
-            console.log("Error in save desktopCapture");
-            console.log(error);
-            // Send App Message
-            mainWindow.webContents.send(
-                "AppMessage",
-                {
-                    message: "キャプチャを保存できません",
-                    type: "error"
+    const filePath = dialog.showSaveDialog(mainWindow, {
+        buttonLabel: "Save",
+        filters: [
+            {
+                name: 'WebM Video Format',
+                extensions: ["webm"]
+            },
+        ],
+        properties:[
+            "createDirectory",
+        ]
+    }).then(result => {
+        if (result.filePath !== undefined) { // Cancelled
+            fs.writeFile(result.filePath, buffer, (error) => {
+                if (error) {
+                    console.log("Error in save desktopCapture");
+                    console.log(error);
+                    // Send App Message
+                    mainWindow.webContents.send(
+                        "AppMessage",
+                        {
+                            message: "キャプチャを保存できません",
+                            type: "error"
+                        }
+                    );
+                } else {
+                    // Success
+                    console.log("Successfully Saved a Captured Video");
+                    // Send App Message
+                    mainWindow.webContents.send(
+                        // Channel name
+                        "AppMessage",
+                        // Data
+                        {
+                            message: "キャプチャを保存しました",
+                            type: "success"
+                        }
+                    );
                 }
-            );
-        } else {
-            // Success
-            console.log("Successfully Saved a Captured Video");
-            // Send App Message
-            mainWindow.webContents.send(
-                // Channel name
-                "AppMessage",
-                // Data
-                {
-                    message: "キャプチャを保存しました",
-                    type: "success"
-                }
-            );
+            });
         }
     });
 });
