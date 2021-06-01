@@ -10,6 +10,8 @@ import { Alert, Card, CardContent, TextField, Button, H3, H4, H5, H6, Subtitle1,
 const MainView = () => {
 
     // useState
+    const [buttonState, setButtonState] = useState(0);
+
     const [appMessage, setAppMessage] = useState("起動しました");
     const [appMessageType, setAppMessageType] = useState("success");
     const [browserURL, setBrowserURL] = useState("http://abehiroshi.la.coocan.jp");
@@ -42,6 +44,7 @@ const MainView = () => {
                     url: browserURL
                 }
             );
+            setButtonState(1);
         } else {
             console.log("URL is invalid");
             setAppMessage("不正なURLのためコンテンツを開けません");
@@ -56,6 +59,17 @@ const MainView = () => {
             // Data
             {}
         );
+        setButtonState(2);
+    };
+    const onStopButton = () => {
+        console.log("StopButton");
+        window.api.send(
+            // Channel
+            "Stop",
+            // Data
+            {}
+        );
+        setButtonState(0);
     };
 
 
@@ -128,10 +142,14 @@ const MainView = () => {
           {/* Buttons */}
           <div style={{ padding: '4px', display: 'flex', justifyContent: 'left', alignItems: 'center' }}>
             <Button onClick={onOpenBrowserButton}
-                    style={{ margin: '6px' }}>ブラウザを開く</Button>
+                    style={{ margin: '6px' }}
+                    disabled={ buttonState === 0 ? false : true }>ブラウザを開く</Button>
             <Button onClick={onStartButton}
-                    x                    style={{ margin: '6px' }}
-                    disabled>計測開始</Button>
+                    style={{ margin: '6px' }}
+                    disabled={ buttonState === 1 ? false : true }>計測開始</Button>
+            <Button onClick={onStopButton}
+                    style={{ margin: '6px' }}
+                    disabled={ buttonState === 2 ? false : true }>計測終了</Button>
           </div>
           {/* Application Message */}
           <Card style={{ margin: '6px' }}>

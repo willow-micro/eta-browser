@@ -1,7 +1,7 @@
 // System
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 // User
-
+import Capturer from '../../Capturer.js';
 
 // Sub Component
 const WebView = React.forwardRef((props, ref) => {
@@ -24,6 +24,8 @@ const WebView = React.forwardRef((props, ref) => {
 
 // Main Component
 const MainView = () => {
+
+    const capturer = new Capturer("ETA Browser (Viewer)", "SaveBufferToFile");
 
     // useState
     const [viewerUrl, setViewerUrl] = useState("");
@@ -91,7 +93,14 @@ const MainView = () => {
             );
         }
     });
-
+    window.viewerIPCOn("Start", (event, arg) => {
+        console.log("Start");
+        capturer.start();
+    });
+    window.viewerIPCOn("Stop", (event, arg) => {
+        console.log("Stop");
+        capturer.stop();
+    });
 
     // JSX
     return (

@@ -2,11 +2,11 @@
 // Electron Main Process Script
 
 // System
-const { electron, app, BrowserWindow, ipcMain, Menu } = require('electron');
+const { electron, app, BrowserWindow, ipcMain, Menu, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
 // User
 const menuTemplate = require('./MenuTemplate.js');
-
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -16,6 +16,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 // Make windows object visible from entire the main script
 let mainWindow = null;
 let viewerWindow = null;
+
 
 // Create the main window
 const createWindow = () => {
@@ -88,8 +89,8 @@ ipcMain.on("OpenBrowser", (event, arg) => {
         x: mainWindow.getPosition()[0] + 24,
         y: mainWindow.getPosition()[1] + 24,
         webPreferences: {
-            // Default value since Electron v12
-            nodeIntegration: false,
+            // Default value since Electron v12 is false for prevent XSS. But desktopCapturer requires true
+            nodeIntegration: true,
             // Default is true, but it should be false because the viewer window have <webview> tag
             // So, Viewer Window CANNOT USE ContextBridge.
             contextIsolation: false, //true,
@@ -118,7 +119,7 @@ ipcMain.on("OpenBrowser", (event, arg) => {
         );
     });
 
-    // Send Message
+    // Send App Message
     mainWindow.webContents.send(
         // Channel name
         "AppMessage",
@@ -133,7 +134,70 @@ ipcMain.on("OpenBrowser", (event, arg) => {
 
 ipcMain.on("Start", (event, arg) => {
     console.log("Start");
+    viewerWindow.webContents.send(
+        // Channel name
+        "Start",
+        // Data
+        {}
+    );
 });
+ipcMain.on("Stop", (event, arg) => {
+    console.log("Stop");
+    viewerWindow.webContents.send(
+        // Channel name
+        "Stop",
+        // Data
+        {}
+    );
+});
+ipcMain.on("SaveBufferToFile", (event, arg) => {
+    console.log("SaveBufferToFile");
+    const buffer = arg.buffer;
+    // Write File
+    const filePath = dialog.showSaveDialog(mainWindow, {
+        buttonLabel: "Save",
+        filters: [
+            {
+                name: 'WebM Video Format',
+                extensions: ["webm"]
+            },
+        ],
+        properties:[
+            "createDirectory",
+        ]
+    }).then(result => {
+        if (result.filePath !== undefined) { // Cancelled
+            fs.writeFile(result.filePath, buffer, (error) => {
+                if (error) {
+                    console.log("Error in save desktopCapture");
+                    console.log(error);
+                    // Send App Message
+                    mainWindow.webContents.send(
+                        "AppMessage",
+                        {
+                            message: "キャプチャを保存できません",
+                            type: "error"
+                        }
+                    );
+                } else {
+                    // Success
+                    console.log("Successfully Saved a Captured Video");
+                    // Send App Message
+                    mainWindow.webContents.send(
+                        // Channel name
+                        "AppMessage",
+                        // Data
+                        {
+                            message: "キャプチャを保存しました",
+                            type: "success"
+                        }
+                    );
+                }
+            });
+        }
+    });
+});
+
 
 ipcMain.on("SendDOMDataFromViewerToMain", (event, arg) => {
     // console.log(arg.coordinates.x + ", " + arg.coordinates.y);
@@ -144,6 +208,15 @@ ipcMain.on("SendDOMDataFromViewerToMain", (event, arg) => {
     mainWindow.webContents.send(
         // Channel name
         "SendDOMDataFromMainToMainWindow",
+        // Data
+        arg
+    );
+});
+
+ipcMain.on("AppMessage", (event, arg) => {
+    mainWindow.webContents.send(
+        // Channel name
+        "AppMessage",
         // Data
         arg
     );
