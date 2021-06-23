@@ -10,7 +10,7 @@ const WebView = React.forwardRef((props, ref) => {
           {/* WebView */}
           {/* See: Preload attribute needs absolute path */}
           {
-              ( props.url !== "" ) && <webview preload="file:///Users/kawa/Wakayama/2021/HCDLab/electron/eta-browser/src/ViewerWindow/components/views/WebView/DomAnalyzer.js"
+              ( props.url !== "" ) && <webview preload="file:///home/hcdlab/2021/analyzer/eta-browser/src/ViewerWindow/components/views/WebView/DomAnalyzer.js"
                                                ref={ref}
                                                src={props.url}
                                                style={{ height: '100%', width: '100%' }}
