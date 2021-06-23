@@ -1,10 +1,131 @@
 // System
 import React, { useState, useEffect } from 'react';
-// User
-import 'ui-neumorphism/dist/index.css'
-//import { overrideThemeVariables } from 'ui-neumorphism'
-import { Alert, Card, CardContent, TextField, Button, H3, H4, H5, H6, Subtitle1, Subtitle2, Body1, Body2 } from 'ui-neumorphism'
+//// Material-UI
+import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
+import { AppBar, Toolbar, Grid, Paper, Typography, List, ListSubheader, ListItem, ListItemIcon, ListItemText, ListItemSecondaryAction, Divider } from '@material-ui/core';
+import { ButtonGroup, Button, TextField } from '@material-ui/core';
+import { Alert } from '@material-ui/lab';
+import { grey, blueGrey, brown } from '@material-ui/core/colors';
+import WebIcon from '@material-ui/icons/Web';
+import CodeIcon from '@material-ui/icons/Code';
+import LabelIcon from '@material-ui/icons/Label';
 
+// User
+
+// Colors
+const SystemColor = {
+    Primary: blueGrey[500],
+    Secondary: brown[500],
+    PrimaryText: grey[50],
+    SecondaryText: grey[50],
+    White: grey[50],
+    Black: grey[900],
+    LightGrey: grey[100],
+    DarkGrey: grey[300],
+    ExtraDarkGrey: grey[500],
+};
+
+// Material-UI Custom Theme Application
+// Default values: https://material-ui.com/customization/default-theme/
+const customTheme = createMuiTheme( {
+    // Spacingの設定
+    spacing: 8,                 // デフォルト値: 8px
+    // カラースキームの設定
+    palette: {
+        // プライマリ
+        primary: {
+            main: SystemColor.Primary,
+            contrastText: SystemColor.PrimaryText,
+        },
+        // セカンダリ
+        secondary: {
+            main: SystemColor.Secondary,
+            contrastText: SystemColor.SecondaryText,
+        },
+    },
+    // フォントの設定
+    typography: {
+        // すべてのフォントファミリーの変更
+        fontFamily: [
+            'Roboto',
+            'Noto Sans JP',
+            'sans-serif',
+        ].join( ',' ),
+        // フォントサイズの変更
+        // htmlFontSizeを変更すると, rem (root em)で指定したフォントサイズが影響を受ける．
+        // よってTypographyの各variantのフォントサイズも変化してしまうため，これは変更していない
+        htmlFontSize: 16,       // デフォルト値: 16px
+    },
+    // Material-UIのコンポーネントのデフォルトスタイルの上書き
+    overrides: {
+        // Typography
+        typography: {
+            color: 'inherit',
+            variantMapping: {
+                h1: 'h2',
+                h2: 'h2',
+                h3: 'h2',
+                h4: 'h2',
+                h5: 'h2',
+                h6: 'h2',
+                subtitle1: 'h2',
+                subtitle2: 'h2',
+                body1: 'span',
+                body2: 'span',
+            },
+        },
+        // TextField
+        MuiTextField: {
+            root: {
+                // InputPropsにminおよびmaxを指定した際，その値に応じて親要素より小さくなってしまう現象を防ぐ
+                width: '100%'
+            }
+        }
+    }
+} );
+
+// Customise Styles
+const useStyles = makeStyles((theme) => ({
+    // Root
+    root: {
+        flexGrow: 1
+    },
+    // Label
+    label: {
+        userSelect: 'none'
+    },
+    // AppBar
+    appBar: {
+        backgroundColor: SystemColor.Primary,
+        color: SystemColor.PrimaryText
+    },
+    // ToolBar (inside AppBar) Has Button, etc.
+    toolBar: {
+        flexWrap: 'nowrap',
+        alignItems: 'center'
+    },
+    // ToolBar Title
+    toolBarTitle: {
+        marginLeft: theme.spacing( 2 ),
+        userSelect: 'none'
+    },
+    // Paper
+    paper: {
+        padding: theme.spacing( 2 ),
+        color: SystemColor.Black,
+    },
+    // Text fields
+    textfield: {
+        width: '50vw'
+    },
+    // Button Group div
+    buttonGroupContainer: {
+        display: 'flex',
+        justifyContent: 'center',
+        marginTop: theme.spacing( 2 )
+    }
+}));
 
 // Main Component
 const MainView = () => {
@@ -75,22 +196,16 @@ const MainView = () => {
 
     // onChanges
     const onBrowserURLChange = (event) => {
-        setBrowserURL(event.value);
-    };
-
-
-    // Validation Rules
-    const checkIfValueIsURL = (value) => {
+        setBrowserURL(event.target.value);
         // Check if the given url is valid
         let url = "";
         try {
-            url = new URL(value);
+            url = new URL(event.target.value);
         } catch (_) {
             setIsBrowserURLValid(false);
-            return "URLが不正です";
+            return;
         }
         setIsBrowserURLValid(true);
-        return true;
     };
 
 
@@ -119,96 +234,105 @@ const MainView = () => {
     });
 
     // JSX
+    const classes = useStyles();
     return (
-        <div style={{ display: 'flex', flexFlow: 'column', justifyContent: 'space-between' }}>
-          {/* Title */}
-          {/* <H4>分析コンソール</H4> */}
-          {/* Content URL */}
-          <Card style={{ margin: '6px' }}>
-            <CardContent>
-              <div style={{ display: 'flex', flexFlow: 'column', justifyContent: 'space-between' }}>
-                <H6>設定</H6>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Subtitle2>Webコンテンツ</Subtitle2>
-                  <TextField label="対象のURL"
-                             value={browserURL}
-                             onChange={onBrowserURLChange}
-                             rules={[ checkIfValueIsURL ]}
-                             hideExtra={false} width={500} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          {/* Buttons */}
-          <div style={{ padding: '4px', display: 'flex', justifyContent: 'left', alignItems: 'center' }}>
-            <Button onClick={onOpenBrowserButton}
-                    style={{ margin: '6px' }}
-                    disabled={ buttonState === 0 ? false : true }>ブラウザを開く</Button>
-            <Button onClick={onStartButton}
-                    style={{ margin: '6px' }}
-                    disabled={ buttonState === 1 ? false : true }>計測開始</Button>
-            <Button onClick={onStopButton}
-                    style={{ margin: '6px' }}
-                    disabled={ buttonState === 2 ? false : true }>計測終了</Button>
+        <ThemeProvider theme={ customTheme }>
+          <div className={classes.root}>
+            { /* Header */ }
+            <AppBar className={ classes.appBar } position="fixed" elevation={ 2 }>
+              <Toolbar className={ classes.toolBar } variant="dense"
+                       component="nav" role="navigation" aria-label="メニューバー">
+                <Typography className={ classes.toolBarTitle } variant="h6" component="h1" color="inherit">
+                  コンソール
+                </Typography>
+              </Toolbar>
+            </AppBar>
+            { /* Content */ }
+            <Grid container spacing={ 3 }>
+              <Grid item xs={ 12 }>
+                <Alert severity={ appMessageType }>
+                  { appMessage }
+                </Alert>
+              </Grid>
+              <Grid item xs={ 12 }>
+                <Paper className={classes.paper} elevation={ 3 }>
+                  <List aria-labelledby="config-list-subheader"
+                        subheader={
+                            <ListSubheader component="div" id="config-list-subheader">
+                              セットアップ
+                            </ListSubheader>
+                        }>
+                    <ListItem>
+                      <ListItemIcon>
+                        <WebIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="URL" />
+                      <ListItemSecondaryAction>
+                        <TextField className={ classes.textfield }
+                                   name="browserURLField"
+                                   label="Webコンテンツ"
+                                   helperText={ !isBrowserURLValid && "URLが不正です" }
+                                   value={ browserURL }
+                                   onChange={ onBrowserURLChange }
+                                   error={ !isBrowserURLValid }/>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  </List>
+                  <div className={ classes.buttonGroupContainer } >
+                    <ButtonGroup disableElevation variant="contained" color="primary">
+                      <Button onClick={ onOpenBrowserButton }
+                              disabled={ buttonState === 0 ? false : true }>ブラウザを開く</Button>
+                      <Button onClick={ onStartButton }
+                              disabled={ buttonState === 1 ? false : true }>計測開始</Button>
+                      <Button onClick={ onStopButton }
+                              disabled={ buttonState === 2 ? false : true }>計測終了</Button>
+                    </ButtonGroup>
+                  </div>
+                </Paper>
+              </Grid>
+              <Grid item xs={ 12 }>
+                <Paper className={ classes.paper } elevation={ 3 }>
+                  <List aria-labelledby="debug-list-subheader"
+                        subheader={
+                            <ListSubheader component="div" id="debug-list-subheader">
+                              注視要素
+                            </ListSubheader>
+                        }>
+                    <ListItem>
+                      <ListItemIcon>
+                        <CodeIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Tag" secondary="HTML5" />
+                      <ListItemSecondaryAction>
+                        { domType }
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    <Divider/>
+                    <ListItem>
+                      <ListItemIcon>
+                        <CodeIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Role" secondary="WAI-ARIA"/>
+                      <ListItemSecondaryAction>
+                        { domRole }
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    <Divider/>
+                    <ListItem>
+                      <ListItemIcon>
+                        <LabelIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Label" secondary="WAI-ARIA"/>
+                      <ListItemSecondaryAction>
+                        { domAriaLabel }
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  </List>
+                </Paper>
+              </Grid>
+            </Grid>
           </div>
-          {/* Application Message */}
-          <Card style={{ margin: '6px' }}>
-            <CardContent>
-              <Alert inset type={appMessageType}
-                     border='top' style={{ margin: '6px' }}>
-                {appMessage}
-              </Alert>
-            </CardContent>
-          </Card>
-          {/* DOM Info */}
-          <Card style={{ margin: '6px' }}>
-            <CardContent>
-              <div style={{ display: 'flex', flexFlow: 'column', justifyContent: 'space-between' }}>
-                <H6>デバッグ情報</H6>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Subtitle2>TagName</Subtitle2>
-                  <Card inset style={{ margin: '6px' }} width={500}>
-                    <CardContent>
-                      <Body1 style={{ textAlign: 'right' }}>{domType}</Body1>
-                    </CardContent>
-                  </Card>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Subtitle2>ID</Subtitle2>
-                  <Card inset style={{ margin: '6px' }} width={500}>
-                    <CardContent>
-                      <Body1 style={{ textAlign: 'right' }}>{domId}</Body1>
-                    </CardContent>
-                  </Card>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Subtitle2>ClassName</Subtitle2>
-                  <Card inset style={{ margin: '6px' }} width={500}>
-                    <CardContent>
-                      <Body1 style={{ textAlign: 'right' }}>{domClassName}</Body1>
-                    </CardContent>
-                  </Card>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Subtitle2>Role</Subtitle2>
-                  <Card inset style={{ margin: '6px' }} width={500}>
-                    <CardContent>
-                      <Body1 style={{ textAlign: 'right' }}>{domRole}</Body1>
-                    </CardContent>
-                  </Card>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Subtitle2>ARIA Label</Subtitle2>
-                  <Card inset style={{ margin: '6px' }} width={500}>
-                    <CardContent>
-                      <Body1 style={{ textAlign: 'right' }}>{domAriaLabel}</Body1>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        </ThemeProvider>
     );
 };
 
