@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // Mousemove
-document.addEventListener('mousemove', debounce(100, false, (event) => {
+document.addEventListener('mousemove', debounce(150, false, (event) => {
     let elem = document.elementFromPoint(event.clientX, event.clientY);
 
     console.log("type: " + elem.tagName);

@@ -33,13 +33,7 @@ function useHookWithRefCallback() {
 
                         window.viewerIPCSend(
                             "SendDOMDataFromViewerToMain",
-                            //event.args[0]
-                            {
-                                tagName: event.args[0].tagName,
-                                id: event.args[0].id,
-                                role: event.args[0].role,
-                                ariaLabel: event.args[0].ariaLabel
-                            }
+                            event.args[0]
                         );
                         break;
                     default:
