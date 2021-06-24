@@ -133,6 +133,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
+
 // Main Component
 const MainView = () => {
     // useState
@@ -150,7 +151,38 @@ const MainView = () => {
     const [domRole, setDomRole] = useState("<none>");
     const [domAriaLabel, setDomAriaLabel] = useState("<none>");
 
+
+    // IPC Receive Callbacks
+    const onAppMessage = (event, arg) => {
+        setAppMessage(arg.message);
+        setAppMessageType(arg.type);
+    };
+    const onSendDOMDataFromMainToMainWindow = (event, arg) => {
+        console.log(arg.coordinates.x + ", " + arg.coordinates.y);
+        console.log(arg.tagName);
+        console.log(arg.id);
+        console.log(arg.role);
+        console.log(arg.ariaLabel);
+        setDomCoordinateX(arg.coordinates.x);
+        setDomCoordinateY(arg.coordinates.y);
+        setDomTagName(arg.tagName ? arg.tagName : "<none>");
+        setDomId(arg.id ? arg.id : "<none>");
+        setDomRole(arg.role ? arg.role : "<none>");
+        setDomAriaLabel(arg.ariaLabel ? arg.ariaLabel : "<none>");
+    };
+
     // useEffect
+    useEffect(() => {
+        // IPC Receive (from Main) Create Listener
+        window.api.on("AppMessage", onAppMessage);
+        window.api.on("SendDOMDataFromMainToMainWindow", onSendDOMDataFromMainToMainWindow);
+        // Cleanup
+        return () => {
+            // IPC Receive (from Main) Remove Listener
+            window.api.remove("AppMessage", onAppMessage);
+            window.api.remove("SendDOMDataFromMainToMainWindow", onSendDOMDataFromMainToMainWindow);
+        };
+    }, []);
 
 
     // onClicks
@@ -208,26 +240,6 @@ const MainView = () => {
         setIsBrowserURLValid(true);
     };
 
-
-    // IPC Message Rx (from Main)
-    window.api.on("AppMessage", (event, arg) => {
-        setAppMessage(arg.message);
-        setAppMessageType(arg.type);
-    });
-
-    window.api.on("SendDOMDataFromMainToMainWindow", (event, arg) => {
-        console.log(arg.coordinates.x + ", " + arg.coordinates.y);
-        console.log(arg.tagName);
-        console.log(arg.id);
-        console.log(arg.role);
-        console.log(arg.ariaLabel);
-        setDomCoordinateX(arg.coordinates.x);
-        setDomCoordinateY(arg.coordinates.y);
-        setDomTagName(arg.tagName ? arg.tagName : "<none>");
-        setDomId(arg.id ? arg.id : "<none>");
-        setDomRole(arg.role ? arg.role : "<none>");
-        setDomAriaLabel(arg.ariaLabel ? arg.ariaLabel : "<none>");
-    });
 
     // JSX
     const classes = useStyles();

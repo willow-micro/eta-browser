@@ -12,12 +12,14 @@ const { debounce } = require('throttle-debounce');
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOMAnalyzer was loaded.");
-    ipcRenderer.on("SendDataFromViewerToWebView", (event, arg) => {
-        console.log("Data for the webview from the viewer window: " + arg.data);
-    });
+    //// IPC Receive (from Main) Create Listener
+    // ipcRenderer.on("SendGazeDataFromViewerToWebView", (event, arg) => {
+    //     console.log("Received Gaze Data: " + arg.data);
+    // });
 });
 
-// Mousemove
+// Mousemove event
+// Debounce with 150ms
 document.addEventListener('mousemove', debounce(150, false, (event) => {
     let elem = document.elementFromPoint(event.clientX, event.clientY);
 

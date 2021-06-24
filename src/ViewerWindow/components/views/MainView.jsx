@@ -1,5 +1,5 @@
 // System
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 // User
 import Capturer from '../../Capturer.js';
 
@@ -78,39 +78,50 @@ const MainView = () => {
     // useRef
     const [webViewRefObj, webViewRef] = useHookWithRefCallback();
 
-    // useEffect
-
-
-    // IPC Message Rx (from Main)
-    window.viewerIPCOn("ViewerURL", (event, arg) => {
-        console.log(arg.url);
+    // IPC Receive Callbacks
+    const onViewerURL = (event, arg) => {
         setViewerUrl(arg.url);
-    });
-    window.viewerIPCOn("OpenDevTools", (event, arg) => {
-        console.log("OpenDevTools");
+    };
+    const onOpenDevTools = (event, arg) => {
         if (webViewRefObj.current && !webViewRefObj.current.isDevToolsOpened()) {
             webViewRefObj.current.openDevTools();
         }
-    });
-    window.viewerIPCOn("SendDataFromViewerToWebView", (event, arg) => {
-        console.log("Data for webview: " + arg.data);
+    };
+    const onSendGazeDataFromMainToViewer = (event, arg) => {
         if (webViewRefObj.current) {
             webViewRefObj.current.send(
-                "SendDataFromViewerToWebView",
-                {
-                    data: arg.data
-                }
+                "SendGazeDataFromViewerToWebView",
+                arg
             );
         }
-    });
-    window.viewerIPCOn("Start", (event, arg) => {
+    };
+    const onStart = (event, arg) => {
         console.log("Start");
         capturer.start();
-    });
-    window.viewerIPCOn("Stop", (event, arg) => {
+    };
+    const onStop = (event, arg) => {
         console.log("Stop");
         capturer.stop();
-    });
+    };
+
+    // useEffect
+    useEffect(() => {
+        // IPC Receive (from Main) Create Listener
+        window.viewerIPCOn("ViewerURL", onViewerURL);
+        window.viewerIPCOn("OpenDevTools", onOpenDevTools);
+        window.viewerIPCOn("SendGazeDataFromMainToViewer", onSendGazeDataFromMainToViewer);
+        window.viewerIPCOn("Start", onStart);
+        window.viewerIPCOn("Stop", onStop);
+        // Cleanup
+        return () => {
+            // IPC Receive (from Main) Remove Listener
+            window.viewerIPCRemove("ViewerURL", onViewerURL);
+            window.viewerIPCRemove("OpenDevTools", onOpenDevTools);
+            window.viewerIPCRemove("SendGazeDataFromMainToViewer", onSendGazeDataFromMainToViewer);
+            window.viewerIPCRemove("Start", onStart);
+            window.viewerIPCRemove("Stop", onStop);
+        };
+    }, []);
 
     // JSX
     return (
