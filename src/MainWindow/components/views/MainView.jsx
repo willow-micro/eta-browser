@@ -11,6 +11,7 @@ import WebIcon from '@material-ui/icons/Web';
 import CodeIcon from '@material-ui/icons/Code';
 import LabelIcon from '@material-ui/icons/Label';
 import CropFreeIcon from '@material-ui/icons/CropFree';
+import LocationSearchingIcon from '@material-ui/icons/LocationSearching';
 
 // User
 
@@ -128,13 +129,13 @@ const useStyles = makeStyles((theme) => ({
     },
     // Debug List: Right Field
     debugListItemSecondaryAction: {
-        paddingRight: theme.spacing( 4 )
+        paddingRight: theme.spacing( 2 )
     }
 }));
 
+
 // Main Component
 const MainView = () => {
-
     // useState
     const [buttonState, setButtonState] = useState(0);
 
@@ -143,18 +144,44 @@ const MainView = () => {
     const [browserURL, setBrowserURL] = useState("file:///Users/kawa/Wakayama/2021/HCDLab/sample/eta-sample-menu/build/index.html");
     const [isBrowserURLValid, setIsBrowserURLValid] = useState(true);
 
-    const [domTagName, setDomTagName] = useState("");
-    const [domId, setDomId] = useState("");
-    const [domClassName, setDomClassName] = useState("");
-    const [domRole, setDomRole] = useState("");
-    const [domAriaLabel, setDomAriaLabel] = useState("");
-    //const [domContent, setDomContent] = useState("");
-    //const [domCoordinateX, setDomCoordinateX] = useState(0);
-    //const [domCoordinateY, setDomCoordinateY] = useState(0);
+    const [domCoordinateX, setDomCoordinateX] = useState(0);
+    const [domCoordinateY, setDomCoordinateY] = useState(0);
+    const [domTagName, setDomTagName] = useState("<none>");
+    const [domId, setDomId] = useState("<none>");
+    const [domRole, setDomRole] = useState("<none>");
+    const [domAriaLabel, setDomAriaLabel] = useState("<none>");
 
+
+    // IPC Receive Callbacks
+    const onAppMessage = (event, arg) => {
+        setAppMessage(arg.message);
+        setAppMessageType(arg.type);
+    };
+    const onSendDOMDataFromMainToMainWindow = (event, arg) => {
+        console.log(arg.coordinates.x + ", " + arg.coordinates.y);
+        console.log(arg.tagName);
+        console.log(arg.id);
+        console.log(arg.role);
+        console.log(arg.ariaLabel);
+        setDomCoordinateX(arg.coordinates.x);
+        setDomCoordinateY(arg.coordinates.y);
+        setDomTagName(arg.tagName ? arg.tagName : "<none>");
+        setDomId(arg.id ? arg.id : "<none>");
+        setDomRole(arg.role ? arg.role : "<none>");
+        setDomAriaLabel(arg.ariaLabel ? arg.ariaLabel : "<none>");
+    };
 
     // useEffect
     useEffect(() => {
+        // IPC Receive (from Main) Create Listener
+        window.api.on("AppMessage", onAppMessage);
+        window.api.on("SendDOMDataFromMainToMainWindow", onSendDOMDataFromMainToMainWindow);
+        // Cleanup
+        return () => {
+            // IPC Receive (from Main) Remove Listener
+            window.api.remove("AppMessage", onAppMessage);
+            window.api.remove("SendDOMDataFromMainToMainWindow", onSendDOMDataFromMainToMainWindow);
+        };
     }, []);
 
 
@@ -214,24 +241,6 @@ const MainView = () => {
     };
 
 
-    // IPC Message Rx (from Main)
-    window.api.on("AppMessage", (event, arg) => {
-        setAppMessage(arg.message);
-        setAppMessageType(arg.type);
-    });
-
-    window.api.on("SendDOMDataFromMainToMainWindow", (event, arg) => {
-        //console.log(arg.coordinates.x + ", " + arg.coordinates.y);
-        console.log(arg.tagName);
-        console.log(arg.id);
-        console.log(arg.role);
-        console.log(arg.ariaLabel);
-        setDomTagName(arg.tagName);
-        setDomId(arg.id);
-        setDomRole(arg.role);
-        setDomAriaLabel(arg.ariaLabel);
-    });
-
     // JSX
     const classes = useStyles();
     return (
@@ -249,9 +258,11 @@ const MainView = () => {
             { /* Content */ }
             <Grid container spacing={ 3 }>
               <Grid item xs={ 12 }>
-                <Alert severity={ appMessageType }>
-                  { appMessage }
-                </Alert>
+                <Paper elevation={ 3 }>
+                  <Alert severity={ appMessageType }>
+                    { appMessage }
+                  </Alert>
+                </Paper>
               </Grid>
               <Grid item xs={ 12 }>
                 <Paper className={classes.paper} elevation={ 3 }>
@@ -299,10 +310,13 @@ const MainView = () => {
                         }>
                     <ListItem>
                       <ListItemIcon>
+                        <LocationSearchingIcon />
                       </ListItemIcon>
-                      <ListItemText primary="Attribute"/>
+                      <ListItemText primary="Coordinates" secondary="Viewport" />
                       <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        Value
+                        <Typography variant="body1" component="p" color="inherit">
+                          X: { domCoordinateX }, Y: {domCoordinateY}
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                     <Divider/>
@@ -312,7 +326,9 @@ const MainView = () => {
                       </ListItemIcon>
                       <ListItemText primary="Tag" secondary="HTML5" />
                       <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        { domTagName }
+                        <Typography variant="body1" component="p" color="inherit">
+                          { domTagName }
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                     <Divider/>
@@ -322,7 +338,9 @@ const MainView = () => {
                       </ListItemIcon>
                       <ListItemText primary="Role" secondary="WAI-ARIA"/>
                       <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        { domRole }
+                        <Typography variant="body1" component="p" color="inherit">
+                          { domRole }
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                     <Divider/>
@@ -332,7 +350,9 @@ const MainView = () => {
                       </ListItemIcon>
                       <ListItemText primary="ID" secondary="HTML5" />
                       <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        { domId }
+                        <Typography variant="body1" component="p" color="inherit">
+                          { domId }
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                     <Divider/>
@@ -342,7 +362,9 @@ const MainView = () => {
                       </ListItemIcon>
                       <ListItemText primary="Label" secondary="WAI-ARIA"/>
                       <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        { domAriaLabel }
+                        <Typography variant="body1" component="p" color="inherit">
+                          { domAriaLabel }
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                   </List>

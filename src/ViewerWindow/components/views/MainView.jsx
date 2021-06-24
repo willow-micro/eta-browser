@@ -3,40 +3,26 @@ import React, { useCallback, useState, useRef, useEffect } from 'react';
 // User
 import Capturer from '../../Capturer.js';
 
-// Sub Component
-const WebView = React.forwardRef((props, ref) => {
-    return (
-        <React.Fragment>
-          {/* WebView */}
-          {/* See: Preload attribute needs absolute path */}
-          {
-              ( props.url !== "" ) && <webview preload="file:///Users/kawa/Wakayama/2021/HCDLab/electron/eta-browser/src/ViewerWindow/components/views/WebView/DomAnalyzer.js"
-                                               ref={ref}
-                                               src={props.url}
-                                               style={{ height: '100%', width: '100%' }}
-                                               nodeintegration="true"
-                                               nodeintegrationinsubframes="true" />
-          }
-        </React.Fragment>
-    )
-});
 
+// Use callback ref instread of useEffect and useRef normally
+// Because useEffect does not work with ref changes properly
+// See (official): https://ja.reactjs.org/docs/hooks-faq.html#how-can-i-measure-a-dom-node
+// See: https://medium.com/@teh_builder/ref-objects-inside-useeffect-hooks-eb7c15198780
+function useHookWithRefCallback() {
+    // "ref" is in the useHookWithRefCallback function object
+    // So you can specify cleanup processes
+    const ref = useRef(null);
+    // Callback ref
+    const setRef = useCallback((node) => {
+        if (ref.current) {
+            // Make sure to cleanup any events/references added to the last instance
+            ref.current.removeEventListener("ipc-message");
+        }
 
-// Main Component
-const MainView = () => {
-
-    const capturer = new Capturer("ETA Browser (Viewer)", "SaveBufferToFile");
-
-    // useState
-    const [viewerUrl, setViewerUrl] = useState("");
-
-    // useRef
-    const webViewEl = useRef(null);
-
-    // useEffect
-    useEffect(() => {
-        if (webViewEl && webViewEl.current) {
-            webViewEl.current.addEventListener("ipc-message", (event) => {
+        if (node) {
+            // Check if a node is actually passed. Otherwise node would be null.
+            // You can now do what you need to, addEventListeners, measure, etc.
+            node.addEventListener("ipc-message", (event) => {
                 switch (event.channel) {
                     case "SendDOMDataFromWebViewToViewer":
                         console.log(event.args[0].coordinates.x + ", " + event.args[0].coordinates.y);
@@ -47,61 +33,99 @@ const MainView = () => {
 
                         window.viewerIPCSend(
                             "SendDOMDataFromViewerToMain",
-                            //event.args[0]
-                            {
-                                tagName: event.args[0].tagName,
-                                id: event.args[0].id,
-                                role: event.args[0].role,
-                                ariaLabel: event.args[0].ariaLabel
-                            }
+                            event.args[0]
                         );
                         break;
                     default:
                         console.log("ch: " + event.channel + ", args: " + event.args);
                 }
             });
-
-            return () => {
-                webViewEl.current.removeEventListener("ipc-message");
-            }
         }
-    });
+
+        // Save a reference to the node
+        ref.current = node
+    }, []);
+
+    return [ ref, setRef ];
+}
 
 
-    // IPC Message Rx (from Main)
-    window.viewerIPCOn("ViewerURL", (event, arg) => {
-        console.log(arg.url);
+// Sub Component
+const WebView = React.forwardRef((props, ref) => {
+    if (props.url === "") {
+        return (null);
+    } else {
+        // Attension: Preload attribute needs absolute path
+        return (
+            <webview preload="file:///Users/kawa/Wakayama/2021/HCDLab/electron/eta-browser/src/ViewerWindow/components/views/WebView/DomAnalyzer.js"
+                     ref={ ref }
+                     src={ props.url }
+                     style={ { height: '100%', width: '100%' } }
+                     nodeintegration="true"
+                     nodeintegrationinsubframes="true" />
+        );
+    }
+});
+
+// Main Component
+const MainView = () => {
+
+    const capturer = new Capturer("ETA Browser (Viewer)", "SaveBufferToFile");
+
+    // useState
+    const [viewerUrl, setViewerUrl] = useState("");
+
+    // useRef
+    const [webViewRefObj, webViewRef] = useHookWithRefCallback();
+
+    // IPC Receive Callbacks
+    const onViewerURL = (event, arg) => {
         setViewerUrl(arg.url);
-    });
-    window.viewerIPCOn("OpenDevTools", (event, arg) => {
-        console.log("OpenDevTools");
-        if (webViewEl && webViewEl.current && !webViewEl.current.isDevToolsOpened()) {
-            webViewEl.current.openDevTools();
+    };
+    const onOpenDevTools = (event, arg) => {
+        if (webViewRefObj.current && !webViewRefObj.current.isDevToolsOpened()) {
+            webViewRefObj.current.openDevTools();
         }
-    });
-    window.viewerIPCOn("SendDataFromViewerToWebView", (event, arg) => {
-        console.log("Data for webview: " + arg.data);
-        if (webViewEl && webViewEl.current) {
-            webViewEl.current.send(
-                "SendDataFromViewerToWebView",
-                {
-                    data: arg.data
-                }
+    };
+    const onSendGazeDataFromMainToViewer = (event, arg) => {
+        if (webViewRefObj.current) {
+            webViewRefObj.current.send(
+                "SendGazeDataFromViewerToWebView",
+                arg
             );
         }
-    });
-    window.viewerIPCOn("Start", (event, arg) => {
+    };
+    const onStart = (event, arg) => {
         console.log("Start");
         capturer.start();
-    });
-    window.viewerIPCOn("Stop", (event, arg) => {
+    };
+    const onStop = (event, arg) => {
         console.log("Stop");
         capturer.stop();
-    });
+    };
+
+    // useEffect
+    useEffect(() => {
+        // IPC Receive (from Main) Create Listener
+        window.viewerIPCOn("ViewerURL", onViewerURL);
+        window.viewerIPCOn("OpenDevTools", onOpenDevTools);
+        window.viewerIPCOn("SendGazeDataFromMainToViewer", onSendGazeDataFromMainToViewer);
+        window.viewerIPCOn("Start", onStart);
+        window.viewerIPCOn("Stop", onStop);
+        // Cleanup
+        return () => {
+            // IPC Receive (from Main) Remove Listener
+            window.viewerIPCRemove("ViewerURL", onViewerURL);
+            window.viewerIPCRemove("OpenDevTools", onOpenDevTools);
+            window.viewerIPCRemove("SendGazeDataFromMainToViewer", onSendGazeDataFromMainToViewer);
+            window.viewerIPCRemove("Start", onStart);
+            window.viewerIPCRemove("Stop", onStop);
+        };
+    }, []);
 
     // JSX
     return (
-        <WebView url={viewerUrl} ref={webViewEl} />
+        <WebView url={ viewerUrl } ref={ webViewRef } />
     );
 };
 
