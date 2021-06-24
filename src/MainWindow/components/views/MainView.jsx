@@ -258,9 +258,11 @@ const MainView = () => {
             { /* Content */ }
             <Grid container spacing={ 3 }>
               <Grid item xs={ 12 }>
-                <Alert severity={ appMessageType }>
-                  { appMessage }
-                </Alert>
+                <Paper elevation={ 3 }>
+                  <Alert severity={ appMessageType }>
+                    { appMessage }
+                  </Alert>
+                </Paper>
               </Grid>
               <Grid item xs={ 12 }>
                 <Paper className={classes.paper} elevation={ 3 }>
@@ -312,7 +314,9 @@ const MainView = () => {
                       </ListItemIcon>
                       <ListItemText primary="Coordinates" secondary="Viewport" />
                       <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        X: { domCoordinateX }, Y: {domCoordinateY}
+                        <Typography variant="body1" component="p" color="inherit">
+                          X: { domCoordinateX }, Y: {domCoordinateY}
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                     <Divider/>
@@ -322,7 +326,9 @@ const MainView = () => {
                       </ListItemIcon>
                       <ListItemText primary="Tag" secondary="HTML5" />
                       <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        { domTagName }
+                        <Typography variant="body1" component="p" color="inherit">
+                          { domTagName }
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                     <Divider/>
@@ -332,7 +338,9 @@ const MainView = () => {
                       </ListItemIcon>
                       <ListItemText primary="Role" secondary="WAI-ARIA"/>
                       <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        { domRole }
+                        <Typography variant="body1" component="p" color="inherit">
+                          { domRole }
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                     <Divider/>
@@ -342,7 +350,9 @@ const MainView = () => {
                       </ListItemIcon>
                       <ListItemText primary="ID" secondary="HTML5" />
                       <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        { domId }
+                        <Typography variant="body1" component="p" color="inherit">
+                          { domId }
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                     <Divider/>
@@ -352,7 +362,9 @@ const MainView = () => {
                       </ListItemIcon>
                       <ListItemText primary="Label" secondary="WAI-ARIA"/>
                       <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        { domAriaLabel }
+                        <Typography variant="body1" component="p" color="inherit">
+                          { domAriaLabel }
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                   </List>
