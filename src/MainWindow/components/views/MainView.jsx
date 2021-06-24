@@ -10,6 +10,7 @@ import { grey, blueGrey, brown } from '@material-ui/core/colors';
 import WebIcon from '@material-ui/icons/Web';
 import CodeIcon from '@material-ui/icons/Code';
 import LabelIcon from '@material-ui/icons/Label';
+import CropFreeIcon from '@material-ui/icons/CropFree';
 
 // User
 
@@ -124,6 +125,10 @@ const useStyles = makeStyles((theme) => ({
         display: 'flex',
         justifyContent: 'center',
         marginTop: theme.spacing( 2 )
+    },
+    // Debug List: Right Field
+    debugListItemSecondaryAction: {
+        paddingRight: theme.spacing( 4 )
     }
 }));
 
@@ -135,10 +140,10 @@ const MainView = () => {
 
     const [appMessage, setAppMessage] = useState("起動しました");
     const [appMessageType, setAppMessageType] = useState("success");
-    const [browserURL, setBrowserURL] = useState("http://abehiroshi.la.coocan.jp");
+    const [browserURL, setBrowserURL] = useState("file:///Users/kawa/Wakayama/2021/HCDLab/sample/eta-sample-menu/build/index.html");
     const [isBrowserURLValid, setIsBrowserURLValid] = useState(true);
 
-    const [domType, setDomType] = useState("");
+    const [domTagName, setDomTagName] = useState("");
     const [domId, setDomId] = useState("");
     const [domClassName, setDomClassName] = useState("");
     const [domRole, setDomRole] = useState("");
@@ -217,20 +222,14 @@ const MainView = () => {
 
     window.api.on("SendDOMDataFromMainToMainWindow", (event, arg) => {
         //console.log(arg.coordinates.x + ", " + arg.coordinates.y);
-        console.log(arg.type);
+        console.log(arg.tagName);
         console.log(arg.id);
-        console.log(arg.className);
         console.log(arg.role);
         console.log(arg.ariaLabel);
-        //console.log(arg.content);
-        setDomType(arg.type);
+        setDomTagName(arg.tagName);
         setDomId(arg.id);
-        setDomClassName(arg.className);
         setDomRole(arg.role);
         setDomAriaLabel(arg.ariaLabel);
-        //setDomContent(arg.content);
-        //setDomCoordinateX(arg.coordinates.x);
-        //setDomCoordinateY(arg.coordinates.y);
     });
 
     // JSX
@@ -300,11 +299,20 @@ const MainView = () => {
                         }>
                     <ListItem>
                       <ListItemIcon>
+                      </ListItemIcon>
+                      <ListItemText primary="Attribute"/>
+                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
+                        Value
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    <Divider/>
+                    <ListItem>
+                      <ListItemIcon>
                         <CodeIcon />
                       </ListItemIcon>
                       <ListItemText primary="Tag" secondary="HTML5" />
-                      <ListItemSecondaryAction>
-                        { domType }
+                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
+                        { domTagName }
                       </ListItemSecondaryAction>
                     </ListItem>
                     <Divider/>
@@ -313,8 +321,18 @@ const MainView = () => {
                         <CodeIcon />
                       </ListItemIcon>
                       <ListItemText primary="Role" secondary="WAI-ARIA"/>
-                      <ListItemSecondaryAction>
+                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
                         { domRole }
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    <Divider/>
+                    <ListItem>
+                      <ListItemIcon>
+                        <CropFreeIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="ID" secondary="HTML5" />
+                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
+                        { domId }
                       </ListItemSecondaryAction>
                     </ListItem>
                     <Divider/>
@@ -323,7 +341,7 @@ const MainView = () => {
                         <LabelIcon />
                       </ListItemIcon>
                       <ListItemText primary="Label" secondary="WAI-ARIA"/>
-                      <ListItemSecondaryAction>
+                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
                         { domAriaLabel }
                       </ListItemSecondaryAction>
                     </ListItem>

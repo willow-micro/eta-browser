@@ -40,10 +40,8 @@ const MainView = () => {
                 switch (event.channel) {
                     case "SendDOMDataFromWebViewToViewer":
                         console.log(event.args[0].coordinates.x + ", " + event.args[0].coordinates.y);
-                        console.log(event.args[0].type);
+                        console.log(event.args[0].tagName);
                         console.log(event.args[0].id);
-                        console.log(event.args[0].className);
-                        console.log(event.args[0].content);
                         console.log(event.args[0].role);
                         console.log(event.args[0].ariaLabel);
 
@@ -51,9 +49,8 @@ const MainView = () => {
                             "SendDOMDataFromViewerToMain",
                             //event.args[0]
                             {
-                                type: event.args[0].type,
+                                tagName: event.args[0].tagName,
                                 id: event.args[0].id,
-                                className: event.args[0].className,
                                 role: event.args[0].role,
                                 ariaLabel: event.args[0].ariaLabel
                             }

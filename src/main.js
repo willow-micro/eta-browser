@@ -202,9 +202,8 @@ ipcMain.on("SaveBufferToFile", (event, arg) => {
 ipcMain.on("SendDOMDataFromViewerToMain", (event, arg) => {
     // console.log(arg.coordinates.x + ", " + arg.coordinates.y);
     // console.log(arg.type);
-    // console.log(arg.id);
-    // console.log(arg.className);
-    // console.log(arg.content);
+    // console.log(arg.role);
+    // console.log(arg.ariaLabel);
     mainWindow.webContents.send(
         // Channel name
         "SendDOMDataFromMainToMainWindow",

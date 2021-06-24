@@ -31,8 +31,6 @@ document.addEventListener('mousemove', (event) => {
 
         console.log("type: " + elem.tagName);
         console.log("id: " + elem.id);
-        console.log("id: " + elem.className);
-        console.log("content: " + elem.innerHTML);
         console.log("role: " + elem.getAttribute("role"));
         console.log("aria-label: " + elem.ariaLabel);
 
@@ -43,10 +41,8 @@ document.addEventListener('mousemove', (event) => {
                     x: event.clientX,
                     y: event.clientY
                 },
-                type: elem.tagName,
+                tagName: elem.tagName,
                 id: elem.id,
-                className: elem.className,
-                content: elem.innerHTML,
                 role: elem.getAttribute("role"),
                 ariaLabel: elem.ariaLabel
             }
