@@ -3,7 +3,6 @@ import React, { useCallback, useState, useRef, useEffect } from 'react';
 // User
 import Capturer from '../../Capturer.js';
 
-
 // Use callback ref instread of useEffect and useRef normally
 // Because useEffect does not work with ref changes properly
 // See (official): https://ja.reactjs.org/docs/hooks-faq.html#how-can-i-measure-a-dom-node
@@ -57,7 +56,7 @@ const WebView = React.forwardRef((props, ref) => {
     } else {
         // Attension: Preload attribute needs absolute path
         return (
-            <webview preload="file:///Users/kawa/Wakayama/2021/HCDLab/electron/eta-browser/src/ViewerWindow/components/views/WebView/DomAnalyzer.js"
+            <webview preload="file:///home/hcdlab/2021/analyzer/eta-browser/src/ViewerWindow/components/views/WebView/DomAnalyzer.js"
                      ref={ ref }
                      src={ props.url }
                      style={ { height: '100%', width: '100%' } }
