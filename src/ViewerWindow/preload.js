@@ -12,7 +12,12 @@ window.viewerIPCSend = (channel, data) => {
     electron.ipcRenderer.send(channel, data);
 };
 
-// IPC Receive (from Main)
+// IPC Receive (from Main) Create Listener
 window.viewerIPCOn = (channel, func) => {
     electron.ipcRenderer.on(channel, (event, ...args) => func(event, ...args));
+};
+
+// IPC Receive (from Main) Remove Listener
+window.viewerIPCRemove = (channel, func) => {
+    electron.ipcRenderer.removeListener(channel, (event, ...args) => func(event, ...args));
 };

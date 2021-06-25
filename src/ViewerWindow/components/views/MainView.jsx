@@ -3,24 +3,68 @@ import React, { useCallback, useState, useRef, useEffect } from 'react';
 // User
 import Capturer from '../../Capturer.js';
 
+// Use callback ref instread of useEffect and useRef normally
+// Because useEffect does not work with ref changes properly
+// See (official): https://ja.reactjs.org/docs/hooks-faq.html#how-can-i-measure-a-dom-node
+// See: https://medium.com/@teh_builder/ref-objects-inside-useeffect-hooks-eb7c15198780
+function useHookWithRefCallback() {
+    // "ref" is in the useHookWithRefCallback function object
+    // So you can specify cleanup processes
+    const ref = useRef(null);
+    // Callback ref
+    const setRef = useCallback((node) => {
+        if (ref.current) {
+            // Make sure to cleanup any events/references added to the last instance
+            ref.current.removeEventListener("ipc-message");
+        }
+
+        if (node) {
+            // Check if a node is actually passed. Otherwise node would be null.
+            // You can now do what you need to, addEventListeners, measure, etc.
+            node.addEventListener("ipc-message", (event) => {
+                switch (event.channel) {
+                    case "SendDOMDataFromWebViewToViewer":
+                        console.log(event.args[0].coordinates.x + ", " + event.args[0].coordinates.y);
+                        console.log(event.args[0].tagName);
+                        console.log(event.args[0].id);
+                        console.log(event.args[0].role);
+                        console.log(event.args[0].ariaLabel);
+
+                        window.viewerIPCSend(
+                            "SendDOMDataFromViewerToMain",
+                            event.args[0]
+                        );
+                        break;
+                    default:
+                        console.log("ch: " + event.channel + ", args: " + event.args);
+                }
+            });
+        }
+
+        // Save a reference to the node
+        ref.current = node
+    }, []);
+
+    return [ ref, setRef ];
+}
+
+
 // Sub Component
 const WebView = React.forwardRef((props, ref) => {
-    return (
-        <React.Fragment>
-          {/* WebView */}
-          {/* See: Preload attribute needs absolute path */}
-          {
-              ( props.url !== "" ) && <webview preload="file:///home/hcdlab/2021/analyzer/eta-browser/src/ViewerWindow/components/views/WebView/DomAnalyzer.js"
-                                               ref={ref}
-                                               src={props.url}
-                                               style={{ height: '100%', width: '100%' }}
-                                               nodeintegration="true"
-                                               nodeintegrationinsubframes="true" />
-          }
-        </React.Fragment>
-    )
+    if (props.url === "") {
+        return (null);
+    } else {
+        // Attension: Preload attribute needs absolute path
+        return (
+            <webview preload="file:///home/hcdlab/2021/analyzer/eta-browser/src/ViewerWindow/components/views/WebView/DomAnalyzer.js"
+                     ref={ ref }
+                     src={ props.url }
+                     style={ { height: '100%', width: '100%' } }
+                     nodeintegration="true"
+                     nodeintegrationinsubframes="true" />
+        );
+    }
 });
-
 
 // Main Component
 const MainView = () => {
@@ -31,80 +75,56 @@ const MainView = () => {
     const [viewerUrl, setViewerUrl] = useState("");
 
     // useRef
-    const webViewEl = useRef(null);
+    const [webViewRefObj, webViewRef] = useHookWithRefCallback();
+
+    // IPC Receive Callbacks
+    const onViewerURL = (event, arg) => {
+        setViewerUrl(arg.url);
+    };
+    const onOpenDevTools = (event, arg) => {
+        if (webViewRefObj.current && !webViewRefObj.current.isDevToolsOpened()) {
+            webViewRefObj.current.openDevTools();
+        }
+    };
+    const onSendGazeDataFromMainToViewer = (event, arg) => {
+        if (webViewRefObj.current) {
+            webViewRefObj.current.send(
+                "SendGazeDataFromViewerToWebView",
+                arg
+            );
+        }
+    };
+    const onStart = (event, arg) => {
+        console.log("Start");
+        capturer.start();
+    };
+    const onStop = (event, arg) => {
+        console.log("Stop");
+        capturer.stop();
+    };
 
     // useEffect
     useEffect(() => {
-        if (webViewEl && webViewEl.current) {
-            webViewEl.current.addEventListener("ipc-message", (event) => {
-                switch (event.channel) {
-                    case "SendDOMDataFromWebViewToViewer":
-                        console.log(event.args[0].coordinates.x + ", " + event.args[0].coordinates.y);
-                        console.log(event.args[0].type);
-                        console.log(event.args[0].id);
-                        console.log(event.args[0].className);
-                        console.log(event.args[0].content);
-                        console.log(event.args[0].role);
-                        console.log(event.args[0].ariaLabel);
-
-                        window.viewerIPCSend(
-                            "SendDOMDataFromViewerToMain",
-                            //event.args[0]
-                            {
-                                type: event.args[0].type,
-                                id: event.args[0].id,
-                                className: event.args[0].className,
-                                role: event.args[0].role,
-                                ariaLabel: event.args[0].ariaLabel
-                            }
-                        );
-                        break;
-                    default:
-                        console.log("ch: " + event.channel + ", args: " + event.args);
-                }
-            });
-
-            return () => {
-                webViewEl.current.removeEventListener("ipc-message");
-            }
-        }
-    });
-
-
-    // IPC Message Rx (from Main)
-    window.viewerIPCOn("ViewerURL", (event, arg) => {
-        console.log(arg.url);
-        setViewerUrl(arg.url);
-    });
-    window.viewerIPCOn("OpenDevTools", (event, arg) => {
-        console.log("OpenDevTools");
-        if (webViewEl && webViewEl.current && !webViewEl.current.isDevToolsOpened()) {
-            webViewEl.current.openDevTools();
-        }
-    });
-    window.viewerIPCOn("SendDataFromViewerToWebView", (event, arg) => {
-        console.log("Data for webview: " + arg.data);
-        if (webViewEl && webViewEl.current) {
-            webViewEl.current.send(
-                "SendDataFromViewerToWebView",
-                {
-                    data: arg.data
-                }
-            );
-        }
-    });
-    window.viewerIPCOn("Start", (event, arg) => {
-        console.log("Start");
-        capturer.start();
-    });
-    window.viewerIPCOn("Stop", (event, arg) => {
-        console.log("Stop");
-        capturer.stop();
-    });
+        // IPC Receive (from Main) Create Listener
+        window.viewerIPCOn("ViewerURL", onViewerURL);
+        window.viewerIPCOn("OpenDevTools", onOpenDevTools);
+        window.viewerIPCOn("SendGazeDataFromMainToViewer", onSendGazeDataFromMainToViewer);
+        window.viewerIPCOn("Start", onStart);
+        window.viewerIPCOn("Stop", onStop);
+        // Cleanup
+        return () => {
+            // IPC Receive (from Main) Remove Listener
+            window.viewerIPCRemove("ViewerURL", onViewerURL);
+            window.viewerIPCRemove("OpenDevTools", onOpenDevTools);
+            window.viewerIPCRemove("SendGazeDataFromMainToViewer", onSendGazeDataFromMainToViewer);
+            window.viewerIPCRemove("Start", onStart);
+            window.viewerIPCRemove("Stop", onStop);
+        };
+    }, []);
 
     // JSX
     return (
-        <WebView url={viewerUrl} ref={webViewEl} />
+        <WebView url={ viewerUrl } ref={ webViewRef } />
     );
 };
 

@@ -10,6 +10,8 @@ import { grey, blueGrey, brown } from '@material-ui/core/colors';
 import WebIcon from '@material-ui/icons/Web';
 import CodeIcon from '@material-ui/icons/Code';
 import LabelIcon from '@material-ui/icons/Label';
+import CropFreeIcon from '@material-ui/icons/CropFree';
+import LocationSearchingIcon from '@material-ui/icons/LocationSearching';
 
 // User
 
@@ -124,32 +126,62 @@ const useStyles = makeStyles((theme) => ({
         display: 'flex',
         justifyContent: 'center',
         marginTop: theme.spacing( 2 )
+    },
+    // Debug List: Right Field
+    debugListItemSecondaryAction: {
+        paddingRight: theme.spacing( 2 )
     }
 }));
 
+
 // Main Component
 const MainView = () => {
-
     // useState
     const [buttonState, setButtonState] = useState(0);
 
     const [appMessage, setAppMessage] = useState("起動しました");
     const [appMessageType, setAppMessageType] = useState("success");
-    const [browserURL, setBrowserURL] = useState("http://abehiroshi.la.coocan.jp");
+    const [browserURL, setBrowserURL] = useState("file:///Users/kawa/Wakayama/2021/HCDLab/sample/eta-sample-menu/build/index.html");
     const [isBrowserURLValid, setIsBrowserURLValid] = useState(true);
 
-    const [domType, setDomType] = useState("");
-    const [domId, setDomId] = useState("");
-    const [domClassName, setDomClassName] = useState("");
-    const [domRole, setDomRole] = useState("");
-    const [domAriaLabel, setDomAriaLabel] = useState("");
-    //const [domContent, setDomContent] = useState("");
-    //const [domCoordinateX, setDomCoordinateX] = useState(0);
-    //const [domCoordinateY, setDomCoordinateY] = useState(0);
+    const [domCoordinateX, setDomCoordinateX] = useState(0);
+    const [domCoordinateY, setDomCoordinateY] = useState(0);
+    const [domTagName, setDomTagName] = useState("<none>");
+    const [domId, setDomId] = useState("<none>");
+    const [domRole, setDomRole] = useState("<none>");
+    const [domAriaLabel, setDomAriaLabel] = useState("<none>");
 
+
+    // IPC Receive Callbacks
+    const onAppMessage = (event, arg) => {
+        setAppMessage(arg.message);
+        setAppMessageType(arg.type);
+    };
+    const onSendDOMDataFromMainToMainWindow = (event, arg) => {
+        console.log(arg.coordinates.x + ", " + arg.coordinates.y);
+        console.log(arg.tagName);
+        console.log(arg.id);
+        console.log(arg.role);
+        console.log(arg.ariaLabel);
+        setDomCoordinateX(arg.coordinates.x);
+        setDomCoordinateY(arg.coordinates.y);
+        setDomTagName(arg.tagName ? arg.tagName : "<none>");
+        setDomId(arg.id ? arg.id : "<none>");
+        setDomRole(arg.role ? arg.role : "<none>");
+        setDomAriaLabel(arg.ariaLabel ? arg.ariaLabel : "<none>");
+    };
 
     // useEffect
     useEffect(() => {
+        // IPC Receive (from Main) Create Listener
+        window.api.on("AppMessage", onAppMessage);
+        window.api.on("SendDOMDataFromMainToMainWindow", onSendDOMDataFromMainToMainWindow);
+        // Cleanup
+        return () => {
+            // IPC Receive (from Main) Remove Listener
+            window.api.remove("AppMessage", onAppMessage);
+            window.api.remove("SendDOMDataFromMainToMainWindow", onSendDOMDataFromMainToMainWindow);
+        };
     }, []);
 
 
@@ -209,30 +241,6 @@ const MainView = () => {
     };
 
 
-    // IPC Message Rx (from Main)
-    window.api.on("AppMessage", (event, arg) => {
-        setAppMessage(arg.message);
-        setAppMessageType(arg.type);
-    });
-
-    window.api.on("SendDOMDataFromMainToMainWindow", (event, arg) => {
-        //console.log(arg.coordinates.x + ", " + arg.coordinates.y);
-        console.log(arg.type);
-        console.log(arg.id);
-        console.log(arg.className);
-        console.log(arg.role);
-        console.log(arg.ariaLabel);
-        //console.log(arg.content);
-        setDomType(arg.type);
-        setDomId(arg.id);
-        setDomClassName(arg.className);
-        setDomRole(arg.role);
-        setDomAriaLabel(arg.ariaLabel);
-        //setDomContent(arg.content);
-        //setDomCoordinateX(arg.coordinates.x);
-        //setDomCoordinateY(arg.coordinates.y);
-    });
-
     // JSX
     const classes = useStyles();
     return (
@@ -250,9 +258,11 @@ const MainView = () => {
             { /* Content */ }
             <Grid container spacing={ 3 }>
               <Grid item xs={ 12 }>
-                <Alert severity={ appMessageType }>
-                  { appMessage }
-                </Alert>
+                <Paper elevation={ 3 }>
+                  <Alert severity={ appMessageType }>
+                    { appMessage }
+                  </Alert>
+                </Paper>
               </Grid>
               <Grid item xs={ 12 }>
                 <Paper className={classes.paper} elevation={ 3 }>
@@ -300,11 +310,25 @@ const MainView = () => {
                         }>
                     <ListItem>
                       <ListItemIcon>
+                        <LocationSearchingIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Coordinates" secondary="Viewport" />
+                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
+                        <Typography variant="body1" component="p" color="inherit">
+                          X: { domCoordinateX }, Y: {domCoordinateY}
+                        </Typography>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    <Divider/>
+                    <ListItem>
+                      <ListItemIcon>
                         <CodeIcon />
                       </ListItemIcon>
                       <ListItemText primary="Tag" secondary="HTML5" />
-                      <ListItemSecondaryAction>
-                        { domType }
+                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
+                        <Typography variant="body1" component="p" color="inherit">
+                          { domTagName }
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                     <Divider/>
@@ -313,8 +337,22 @@ const MainView = () => {
                         <CodeIcon />
                       </ListItemIcon>
                       <ListItemText primary="Role" secondary="WAI-ARIA"/>
-                      <ListItemSecondaryAction>
-                        { domRole }
+                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
+                        <Typography variant="body1" component="p" color="inherit">
+                          { domRole }
+                        </Typography>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    <Divider/>
+                    <ListItem>
+                      <ListItemIcon>
+                        <CropFreeIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="ID" secondary="HTML5" />
+                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
+                        <Typography variant="body1" component="p" color="inherit">
+                          { domId }
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                     <Divider/>
@@ -323,8 +361,10 @@ const MainView = () => {
                         <LabelIcon />
                       </ListItemIcon>
                       <ListItemText primary="Label" secondary="WAI-ARIA"/>
-                      <ListItemSecondaryAction>
-                        { domAriaLabel }
+                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
+                        <Typography variant="body1" component="p" color="inherit">
+                          { domAriaLabel }
+                        </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                   </List>

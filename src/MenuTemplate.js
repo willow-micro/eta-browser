@@ -78,7 +78,7 @@ const menuTemplate = [
         label: 'Debug',
         submenu: [
             {
-                label: 'Open the DevTools of the webview...',
+                label: 'Open the DevTools for the webview...',
                 click: (menuItem, browserWindow, event) => {
                     // IPC Message Tx (to Renderer)
                     if (browserWindow.webContents) {
@@ -87,22 +87,6 @@ const menuTemplate = [
                             "OpenDevTools",
                             // Data
                             {}
-                        );
-                    }
-                }
-            },
-            {
-                label: 'Send Dummy Data to the webview...',
-                click: (menuItem, browserWindow, event) => {
-                    // IPC Message Tx (to Renderer)
-                    if (browserWindow.webContents) {
-                        browserWindow.webContents.send(
-                            // Channel name
-                            "SendDataToWebView",
-                            // Data
-                            {
-                                data: "hoge"
-                            }
                         );
                     }
                 }
