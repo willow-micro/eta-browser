@@ -170,17 +170,22 @@ const MainView = () => {
         setDomRole(arg.role ? arg.role : "<none>");
         setDomAriaLabel(arg.ariaLabel ? arg.ariaLabel : "<none>");
     };
+    const onViewerClosed = (event, arg) => {
+        setButtonState(0);
+    };
 
     // useEffect
     useEffect(() => {
         // IPC Receive (from Main) Create Listener
         window.api.on("AppMessage", onAppMessage);
         window.api.on("SendDOMDataFromMainToMainWindow", onSendDOMDataFromMainToMainWindow);
+        window.api.on("ViewerClosed", onViewerClosed);
         // Cleanup
         return () => {
             // IPC Receive (from Main) Remove Listener
             window.api.remove("AppMessage", onAppMessage);
             window.api.remove("SendDOMDataFromMainToMainWindow", onSendDOMDataFromMainToMainWindow);
+            window.api.remove("ViewerClosed", onViewerClosed);
         };
     }, []);
 

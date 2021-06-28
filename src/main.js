@@ -106,6 +106,13 @@ ipcMain.on("OpenBrowser", (event, arg) => {
     viewerWindow.webContents.openDevTools();
     viewerWindow.on('closed', function() {
         viewerWindow = null;
+        // Tell main window the browser is closed
+        mainWindow.webContents.send(
+            // Channel name
+            "ViewerClosed",
+            // Data
+            {}
+        );
     });
 
     // Send Destination URL when the viewer window is ready
