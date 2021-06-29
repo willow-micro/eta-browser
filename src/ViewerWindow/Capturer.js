@@ -31,7 +31,10 @@ class Capturer {
                     // Create Buffer from Binary
                     const binary = fileReader.result;
                     let binaryArray = new Uint8Array(binary);
-                    let buffer = new Buffer(binary.byteLength);
+                    // DeprecationWarning: Buffer() is deprecated due to security and usability issues
+                    //let buffer = new Buffer(binary.byteLength);
+                    // Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+                    let buffer = Buffer.alloc(binary.byteLength);
                     for (let i = 0; i < binaryArray.byteLength; i = (i+1)|0) { // Optimized for V8 Engine
                         buffer[i] = binaryArray[i];
                     }
