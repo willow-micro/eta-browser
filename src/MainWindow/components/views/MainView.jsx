@@ -3,15 +3,21 @@ import React, { useState, useEffect } from 'react';
 //// Material-UI
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
-import { AppBar, Toolbar, Grid, Paper, Typography, List, ListSubheader, ListItem, ListItemIcon, ListItemText, ListItemSecondaryAction, Divider } from '@material-ui/core';
+import { AppBar, Toolbar, Grid, Paper, Typography } from '@material-ui/core';
+import { List, ListItem, ListItemIcon, ListItemText, ListItemSecondaryAction, Divider } from '@material-ui/core';
+import { Accordion, AccordionSummary, AccordionDetails, AccordionActions } from '@material-ui/core';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@material-ui/core';
 import { ButtonGroup, Button, TextField } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
 import { grey, blueGrey, brown } from '@material-ui/core/colors';
 import WebIcon from '@material-ui/icons/Web';
+import SearchIcon from '@material-ui/icons/Search';
 import CodeIcon from '@material-ui/icons/Code';
 import LabelIcon from '@material-ui/icons/Label';
 import CropFreeIcon from '@material-ui/icons/CropFree';
 import LocationSearchingIcon from '@material-ui/icons/LocationSearching';
+import LayersIcon from '@material-ui/icons/Layers'
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 // User
 
@@ -117,19 +123,43 @@ const useStyles = makeStyles((theme) => ({
         padding: theme.spacing( 2 ),
         color: SystemColor.Black,
     },
+    // Heading
+    heading: {
+        fontSize: theme.typography.pxToRem(15),
+        fontWeight: theme.typography.fontWeightRegular,
+        color: SystemColor.Black,
+        marginLeft: theme.spacing( 3 )
+    },
+    // Setup Accordion Details
+    setupAccordionDetails: {
+        display: 'block',
+        paddingTop: theme.spacing( 0 ),
+        paddingRight: theme.spacing( 2 ),
+        paddingBottom: theme.spacing( 0 ),
+        paddingLeft: theme.spacing( 2 )
+    },
+    // Setup Accordion Actions
+    setupAccordionActions: {
+        display: 'flex',
+        justifyContent: 'center',
+        padding: theme.spacing( 2 )
+    },
     // Text fields
     textfield: {
         width: '50vw'
     },
-    // Button Group div
-    buttonGroupContainer: {
-        display: 'flex',
-        justifyContent: 'center',
-        marginTop: theme.spacing( 2 )
+    // Debug Table Heading
+    debugTableHeading: {
+        fontSize: theme.typography.pxToRem(15),
+        fontWeight: theme.typography.fontWeightRegular,
+        color: SystemColor.Black,
+        marginLeft: theme.spacing( 3 )
     },
-    // Debug List: Right Field
-    debugListItemSecondaryAction: {
-        paddingRight: theme.spacing( 2 )
+    // Debug Table: Icon Margin
+    debugTableIcon: {
+        marginRight: theme.spacing( 3 ),
+        marginLeft: theme.spacing( 3 ),
+        verticalAlign: 'sub'
     }
 }));
 
@@ -144,12 +174,27 @@ const MainView = () => {
     const [browserURL, setBrowserURL] = useState("file:///Users/kawa/Wakayama/2021/HCDLab/sample/eta-sample-menu/build/index.html");
     const [isBrowserURLValid, setIsBrowserURLValid] = useState(true);
 
+    // Coordinates
     const [domCoordinateX, setDomCoordinateX] = useState(0);
     const [domCoordinateY, setDomCoordinateY] = useState(0);
+    // Main Target Element
+    const [domIsTarget, setDomIsTarget] = useState("not");
     const [domTagName, setDomTagName] = useState("<none>");
     const [domId, setDomId] = useState("<none>");
     const [domRole, setDomRole] = useState("<none>");
     const [domAriaLabel, setDomAriaLabel] = useState("<none>");
+    // Parent Target Element
+    const [parentDomIsTarget, setParentDomIsTarget] = useState("not");
+    const [parentDomCoordinateX, setParentDomCoordinateX] = useState(0);
+    const [parentDomCoordinateY, setParentDomCoordinateY] = useState(0);
+    const [parentDomTagName, setParentDomTagName] = useState("<none>");
+    const [parentDomId, setParentDomId] = useState("<none>");
+    const [parentDomRole, setParentDomRole] = useState("<none>");
+    const [parentDomAriaLabel, setParentDomAriaLabel] = useState("<none>");
+    // Element Path (Filtered)
+    const [elemPath, setElemPath] = useState("<none>");
+    // Element Path (All)
+    const [elemPathAll, setElemPathAll] = useState("<none>");
 
 
     // IPC Receive Callbacks
@@ -158,20 +203,54 @@ const MainView = () => {
         setAppMessageType(arg.type);
     };
     const onDOMDataFromMainToMainWindow = (event, arg) => {
-        console.log(arg.coordinates.x + ", " + arg.coordinates.y);
-        console.log(arg.tagName);
-        console.log(arg.id);
-        console.log(arg.role);
-        console.log(arg.ariaLabel);
+        /* console.log(arg.mainElement.coordinates.x + ", " + arg.mainElement.coordinates.y);
+         * console.log(arg.mainElement.tagName);
+         * console.log(arg.mainElement.id);
+         * console.log(arg.mainElement.role);
+         * console.log(arg.mainElement.ariaLabel); */
+
+        // Coordinates
         setDomCoordinateX(arg.coordinates.x);
         setDomCoordinateY(arg.coordinates.y);
-        setDomTagName(arg.tagName ? arg.tagName : "<none>");
-        setDomId(arg.id ? arg.id : "<none>");
-        setDomRole(arg.role ? arg.role : "<none>");
-        setDomAriaLabel(arg.ariaLabel ? arg.ariaLabel : "<none>");
+        // Main Element
+        setDomIsTarget(arg.mainElement.isTarget ? "target" : "not");
+        setDomTagName(arg.mainElement.tagName ? arg.mainElement.tagName : "<none>");
+        setDomId(arg.mainElement.id ? arg.mainElement.id : "<none>");
+        setDomRole(arg.mainElement.role ? arg.mainElement.role : "<none>");
+        setDomAriaLabel(arg.mainElement.ariaLabel ? arg.mainElement.ariaLabel : "<none>");
+        // Parent Element
+        setParentDomIsTarget(arg.parentElement.isTarget ? "target" : "not");
+        setParentDomTagName(arg.parentElement.tagName ? arg.parentElement.tagName : "<none>");
+        setParentDomId(arg.parentElement.id ? arg.parentElement.id : "<none>");
+        setParentDomRole(arg.parentElement.role ? arg.parentElement.role : "<none>");
+        setParentDomAriaLabel(arg.parentElement.ariaLabel ? arg.parentElement.ariaLabel : "<none>");
+        // Element Path (Filtered)
+        setElemPath(arg.elemPath ? arg.elemPath : "<none>");
+        // Element Path (All)
+        setElemPathAll(arg.elemPathAll ? arg.elemPathAll : "<none>");
     };
     const onViewerClosed = (event, arg) => {
+        // Button State
         setButtonState(0);
+        // Coordinates
+        setDomCoordinateX(0);
+        setDomCoordinateY(0);
+        // Main Element
+        setDomIsTarget("not");
+        setDomTagName("<none>");
+        setDomId("<none>");
+        setDomRole("<none>");
+        setDomAriaLabel("<none>");
+        // Parent Element
+        setParentDomIsTarget("not");
+        setParentDomTagName("<none>");
+        setParentDomId("<none>");
+        setParentDomRole("<none>");
+        setParentDomAriaLabel("<none>");
+        // Element Path (Filtered)
+        setElemPath("<none>");
+        // Element Path (All)
+        setElemPathAll("<none>");
     };
 
     // useEffect
@@ -263,37 +342,39 @@ const MainView = () => {
             { /* Content */ }
             <Grid container spacing={ 3 }>
               <Grid item xs={ 12 }>
-                <Paper elevation={ 3 }>
+                <Paper>
                   <Alert severity={ appMessageType }>
                     { appMessage }
                   </Alert>
                 </Paper>
               </Grid>
               <Grid item xs={ 12 }>
-                <Paper className={classes.paper} elevation={ 3 }>
-                  <List aria-labelledby="config-list-subheader"
-                        subheader={
-                            <ListSubheader component="div" id="config-list-subheader">
-                              セットアップ
-                            </ListSubheader>
-                        }>
-                    <ListItem>
-                      <ListItemIcon>
-                        <WebIcon />
-                      </ListItemIcon>
-                      <ListItemText primary="URL" />
-                      <ListItemSecondaryAction>
-                        <TextField className={ classes.textfield }
-                                   name="browserURLField"
-                                   label="Webコンテンツ"
-                                   helperText={ !isBrowserURLValid && "URLが不正です" }
-                                   value={ browserURL }
-                                   onChange={ onBrowserURLChange }
-                                   error={ !isBrowserURLValid }/>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  </List>
-                  <div className={ classes.buttonGroupContainer } >
+                <Accordion defaultExpanded={ true }>
+                  <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
+                                    aria-controls="setup-list-panel-content"
+                                    id="setup-list-panel-header">
+                    <Typography className={ classes.heading } component="h2">セットアップ</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails className={ classes.setupAccordionDetails }>
+                    <List aria-labelledby="config-list-subheader">
+                      <ListItem>
+                        <ListItemIcon>
+                          <WebIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="URL" />
+                        <ListItemSecondaryAction>
+                          <TextField className={ classes.textfield }
+                                     name="browserURLField"
+                                     label="Webコンテンツ"
+                                     helperText={ !isBrowserURLValid && "URLが不正です" }
+                                     value={ browserURL }
+                                     onChange={ onBrowserURLChange }
+                                     error={ !isBrowserURLValid }/>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                    </List>
+                  </AccordionDetails>
+                  <AccordionActions className={ classes.setupAccordionActions }>
                     <ButtonGroup disableElevation variant="contained" color="primary">
                       <Button onClick={ onOpenBrowserButton }
                               disabled={ buttonState === 0 ? false : true }>ブラウザを開く</Button>
@@ -302,78 +383,130 @@ const MainView = () => {
                       <Button onClick={ onStopButton }
                               disabled={ buttonState === 2 ? false : true }>計測終了</Button>
                     </ButtonGroup>
-                  </div>
-                </Paper>
+                  </AccordionActions>
+                </Accordion>
               </Grid>
               <Grid item xs={ 12 }>
-                <Paper className={ classes.paper } elevation={ 3 }>
-                  <List aria-labelledby="debug-list-subheader"
-                        subheader={
-                            <ListSubheader component="div" id="debug-list-subheader">
-                              注視要素
-                            </ListSubheader>
-                        }>
-                    <ListItem>
-                      <ListItemIcon>
-                        <LocationSearchingIcon />
-                      </ListItemIcon>
-                      <ListItemText primary="Coordinates" secondary="Viewport" />
-                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        <Typography variant="body1" component="p" color="inherit">
-                          X: { domCoordinateX }, Y: {domCoordinateY}
-                        </Typography>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                    <Divider/>
-                    <ListItem>
-                      <ListItemIcon>
-                        <CodeIcon />
-                      </ListItemIcon>
-                      <ListItemText primary="Tag" secondary="HTML5" />
-                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        <Typography variant="body1" component="p" color="inherit">
-                          { domTagName }
-                        </Typography>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                    <Divider/>
-                    <ListItem>
-                      <ListItemIcon>
-                        <CodeIcon />
-                      </ListItemIcon>
-                      <ListItemText primary="Role" secondary="WAI-ARIA"/>
-                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        <Typography variant="body1" component="p" color="inherit">
-                          { domRole }
-                        </Typography>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                    <Divider/>
-                    <ListItem>
-                      <ListItemIcon>
-                        <CropFreeIcon />
-                      </ListItemIcon>
-                      <ListItemText primary="ID" secondary="HTML5" />
-                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        <Typography variant="body1" component="p" color="inherit">
-                          { domId }
-                        </Typography>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                    <Divider/>
-                    <ListItem>
-                      <ListItemIcon>
-                        <LabelIcon />
-                      </ListItemIcon>
-                      <ListItemText primary="Label" secondary="WAI-ARIA"/>
-                      <ListItemSecondaryAction className={ classes.debugListItemSecondaryAction }>
-                        <Typography variant="body1" component="p" color="inherit">
-                          { domAriaLabel }
-                        </Typography>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  </List>
-                </Paper>
+                <Accordion>
+                  <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
+                                    aria-controls="debug-table-panel-content"
+                                    id="debug-table-panel-header">
+                    <Typography className={ classes.debugTableHeading } component="h2">注視要素</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <TableContainer>
+                      <Table size="small" aria-label="現在の注視要素に関する情報の一覧">
+                        <caption>現在の注視要素に関する情報の一覧</caption>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell ></TableCell>
+                            <TableCell align="center">Main</TableCell>
+                            <TableCell align="center">Parent</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell component="th">
+                              <LocationSearchingIcon className={ classes.debugTableIcon } fontSize="small"/>
+                              Coordinates
+                            </TableCell>
+                            <TableCell align="center" colSpan={ 2 }>X: { domCoordinateX }, Y: {domCoordinateY}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell component="th">
+                              <SearchIcon className={ classes.debugTableIcon } fontSize="small"/>
+                              Target or not
+                            </TableCell>
+                            <TableCell align="center"
+                                       style={ { color: (domIsTarget === "not" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                              { domIsTarget }
+                            </TableCell>
+                            <TableCell align="center"
+                                       style={ { color: (parentDomIsTarget === "not" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                              { parentDomIsTarget }
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell component="th">
+                              <CodeIcon className={ classes.debugTableIcon } fontSize="small"/>
+                              Tag
+                            </TableCell>
+                            <TableCell align="center"
+                                       style={ { color: (domTagName === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                              { domTagName }
+                            </TableCell>
+                            <TableCell align="center"
+                                       style={ { color: (parentDomTagName === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                              { parentDomTagName }
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell component="th">
+                              <CodeIcon className={ classes.debugTableIcon } fontSize="small"/>
+                              Role
+                            </TableCell>
+                            <TableCell align="center"
+                                       style={ { color: (domRole === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                              { domRole }
+                            </TableCell>
+                            <TableCell align="center"
+                                       style={ { color: (parentDomRole === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                              { parentDomRole }
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell component="th">
+                              <CropFreeIcon className={ classes.debugTableIcon } fontSize="small"/>
+                              ID
+                            </TableCell>
+                            <TableCell align="center"
+                                       style={ { color: (domId === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                              { domId }
+                            </TableCell>
+                            <TableCell align="center"
+                                       style={ { color: (parentDomId === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                              { parentDomId }
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell component="th">
+                              <LabelIcon className={ classes.debugTableIcon } fontSize="small"/>
+                              Label
+                            </TableCell>
+                            <TableCell align="center"
+                                       style={ { color: (domAriaLabel === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                              { domAriaLabel }
+                            </TableCell>
+                            <TableCell align="center"
+                                       style={ { color: (parentDomAriaLabel === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                              { parentDomAriaLabel }
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell component="th">
+                              <LayersIcon className={ classes.debugTableIcon } fontSize="small"/>
+                              Layers (Filtered)
+                            </TableCell>
+                            <TableCell align="center" colSpan={ 2 }
+                                       style={ { color: (elemPath === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                              { elemPath }
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell component="th">
+                              <LayersIcon className={ classes.debugTableIcon } fontSize="small"/>
+                              Layers (All)
+                            </TableCell>
+                            <TableCell align="center" colSpan={ 2 }
+                                       style={ { color: (elemPathAll === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                              { elemPathAll }
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </AccordionDetails>
+                </Accordion>
               </Grid>
             </Grid>
           </div>
