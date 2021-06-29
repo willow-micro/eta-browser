@@ -5,10 +5,11 @@
 const { electron, app, BrowserWindow, ipcMain, Menu, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { format } = require('@fast-csv/format');
 // User
 const menuTemplate = require('./MenuTemplate.js');
 const Timekeeper = require('./Timekeeper.js');
-
+let isRecording = false;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -21,7 +22,10 @@ let viewerWindow = null;
 
 // Timekeeper for timestamps
 const timekeeper = new Timekeeper();
-
+// CSV Format Stream
+let csvFormatStream = null;
+let csvSaveStream = null;
+let csvSavePath = "";
 
 // Create the main window
 const createWindow = () => {
@@ -117,6 +121,9 @@ ipcMain.on("OpenBrowser", (event, arg) => {
             // Data
             {}
         );
+        isRecording = false;
+        csvFormatStream.end();
+        csvFormatStream = null;
     });
 
     // Send Destination URL when the viewer window is ready
@@ -144,27 +151,35 @@ ipcMain.on("OpenBrowser", (event, arg) => {
 
 });
 
-ipcMain.on("StartAnalysis", (event, arg) => {
-    console.log("Start Analysis");
-    timekeeper.startCounting();
-    viewerWindow.webContents.send(
-        // Channel name
-        "StartAnalysis",
-        // Data
-        {}
-    );
+ipcMain.on("RequestCsvDestinationPath", (event, arg) => {
+    const filePath = dialog.showSaveDialog(mainWindow, {
+        buttonLabel: "Save",
+        filters: [
+            {
+                name: 'Comma Separated Values',
+                extensions: ["csv"]
+            },
+        ],
+        properties:[
+            "createDirectory",
+        ]
+    }).then(result => {
+        if (result.filePath !== undefined) { // If Cancelled, skip it
+            // Respond CSV Path
+            mainWindow.webContents.send(
+                // Channel name
+                "RespondCsvDestinationPath",
+                // Data
+                {
+                    path: result.filePath
+                }
+            );
+            // Store path
+            csvSavePath = result.filePath;
+        }
+    });
 });
-ipcMain.on("StopAnalysis", (event, arg) => {
-    console.log("Stop Analysis");
-    console.log(`Analysis ended with ${ timekeeper.getElapsedTime() }ms.`);
-    timekeeper.stopCounting();
-    viewerWindow.webContents.send(
-        // Channel name
-        "StopAnalysis",
-        // Data
-        {}
-    );
-});
+
 ipcMain.on("SaveBufferToFile", (event, arg) => {
     console.log("SaveBufferToFile");
     const buffer = arg.buffer;
@@ -181,7 +196,7 @@ ipcMain.on("SaveBufferToFile", (event, arg) => {
             "createDirectory",
         ]
     }).then(result => {
-        if (result.filePath !== undefined) { // Cancelled
+        if (result.filePath !== undefined) { // If Cancelled, skip it
             fs.writeFile(result.filePath, buffer, (error) => {
                 if (error) {
                     console.log("Error in save desktopCapture");
@@ -213,18 +228,66 @@ ipcMain.on("SaveBufferToFile", (event, arg) => {
     });
 });
 
+ipcMain.on("StartAnalysis", (event, arg) => {
+    console.log("Start Analysis");
+    viewerWindow.webContents.send(
+        // Channel name
+        "StartAnalysis",
+        // Data
+        {}
+    );
+    timekeeper.startCounting();
+    isRecording = true;
+    csvFormatStream = format({
+        headers: true
+    });
+    csvSaveStream = fs.createWriteStream(csvSavePath);
+    csvFormatStream.pipe(csvSaveStream);
+});
+ipcMain.on("StopAnalysis", (event, arg) => {
+    console.log("Stop Analysis");
+    viewerWindow.webContents.send(
+        // Channel name
+        "StopAnalysis",
+        // Data
+        {}
+    );
+    console.log(`Analysis ended with ${ timekeeper.getElapsedTime() }ms.`);
+    timekeeper.stopCounting();
+    isRecording = false;
+    csvFormatStream.end();
+    csvFormatStream = null;
+    csvSaveStream.end();
+    csvSaveStream = null;
+});
+
 
 ipcMain.on("DOMDataFromViewerToMain", (event, arg) => {
-    // console.log(arg.mainElement.coordinates.x + ", " + arg.mainElement.coordinates.y);
-    // console.log(arg.mainElement.type);
-    // console.log(arg.mainElement.role);
-    // console.log(arg.mainElement.ariaLabel);
     mainWindow.webContents.send(
         // Channel name
         "DOMDataFromMainToMainWindow",
         // Data
         arg
     );
+    if (isRecording) {
+        csvFormatStream.write({
+            Time: timekeeper.getElapsedTime(),
+            X: arg.coordinates.x,
+            Y: arg.coordinates.y,
+            MainElemIsTarget: arg.mainElement.isTarget,
+            ParentElemIsTarget: arg.parentElement.isTarget,
+            MainElemTagName: arg.mainElement.tagName,
+            ParentElemTagName: arg.parentElement.tagName,
+            MainElemId: arg.mainElement.id,
+            ParentElemId: arg.parentElement.id,
+            MainElemRole: arg.mainElement.role,
+            ParentElemRole: arg.parentElement.role,
+            MainElemAriaLabel: arg.mainElement.ariaLabel,
+            ParentElemAriaLabel: arg.parentElement.ariaLabel,
+            ElemPath: arg.elemPath,
+            ElemPathAll: arg.elemPathAll
+        });
+    }
 });
 
 ipcMain.on("AppMessage", (event, arg) => {

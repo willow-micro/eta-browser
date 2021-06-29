@@ -97,11 +97,11 @@ const MainView = () => {
     };
     const onStartAnalysis = (event, arg) => {
         console.log("Start Analysis");
-        capturer.start();
+        //capturer.start();
     };
     const onStopAnalysis = (event, arg) => {
         console.log("Stop Analysis");
-        capturer.stop();
+        //capturer.stop();
     };
 
     // useEffect

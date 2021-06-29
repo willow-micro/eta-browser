@@ -11,6 +11,7 @@ import { ButtonGroup, Button, TextField } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
 import { grey, blueGrey, brown } from '@material-ui/core/colors';
 import WebIcon from '@material-ui/icons/Web';
+import DescriptionIcon from '@material-ui/icons/Description';
 import SearchIcon from '@material-ui/icons/Search';
 import CodeIcon from '@material-ui/icons/Code';
 import LabelIcon from '@material-ui/icons/Label';
@@ -148,6 +149,17 @@ const useStyles = makeStyles((theme) => ({
     textfield: {
         width: '50vw'
     },
+    // Destination Path Selector Container
+    pathSelector: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    // Destination Path
+    destinationPath: {
+        marginRight: theme.spacing( 2 ),
+        color: SystemColor.Black
+    },
     // Debug Table Heading
     debugTableHeading: {
         fontSize: theme.typography.pxToRem(15),
@@ -173,6 +185,8 @@ const MainView = () => {
     const [appMessageType, setAppMessageType] = useState("success");
     const [browserURL, setBrowserURL] = useState("file:///Users/kawa/Wakayama/2021/HCDLab/sample/eta-sample-menu/build/index.html");
     const [isBrowserURLValid, setIsBrowserURLValid] = useState(true);
+    // CSV Destination Path
+    const [csvDestinationPath, setCsvDestinationPath] = useState("");
 
     // Coordinates
     const [domCoordinateX, setDomCoordinateX] = useState(0);
@@ -201,6 +215,14 @@ const MainView = () => {
     const onAppMessage = (event, arg) => {
         setAppMessage(arg.message);
         setAppMessageType(arg.type);
+    };
+    const onRespondCsvDestinationPath = (event, arg) => {
+        if (arg.path !== "") {
+            setCsvDestinationPath(arg.path);
+            if (buttonState === 0) {
+                setButtonState(1);
+            }
+        }
     };
     const onDOMDataFromMainToMainWindow = (event, arg) => {
         /* console.log(arg.mainElement.coordinates.x + ", " + arg.mainElement.coordinates.y);
@@ -231,7 +253,7 @@ const MainView = () => {
     };
     const onViewerClosed = (event, arg) => {
         // Button State
-        setButtonState(0);
+        setButtonState(1);
         // Coordinates
         setDomCoordinateX(0);
         setDomCoordinateY(0);
@@ -257,12 +279,14 @@ const MainView = () => {
     useEffect(() => {
         // IPC Receive (from Main) Create Listener
         window.api.on("AppMessage", onAppMessage);
+        window.api.on("RespondCsvDestinationPath", onRespondCsvDestinationPath);
         window.api.on("DOMDataFromMainToMainWindow", onDOMDataFromMainToMainWindow);
         window.api.on("ViewerClosed", onViewerClosed);
         // Cleanup
         return () => {
             // IPC Receive (from Main) Remove Listener
             window.api.remove("AppMessage", onAppMessage);
+            window.api.remove("RespondCsvDestinationPath", onRespondCsvDestinationPath);
             window.api.remove("DOMDataFromMainToMainWindow", onDOMDataFromMainToMainWindow);
             window.api.remove("ViewerClosed", onViewerClosed);
         };
@@ -270,6 +294,15 @@ const MainView = () => {
 
 
     // onClicks
+    const onSelectCsvDestinationPath = () => {
+        window.api.send(
+            // Channel
+            "RequestCsvDestinationPath",
+            // Data
+            {}
+        );
+    };
+
     const onOpenBrowserButton = () => {
         if (isBrowserURLValid && browserURL.length > 0) {
             console.log("OpenBrowserButton");
@@ -281,7 +314,7 @@ const MainView = () => {
                     url: browserURL
                 }
             );
-            setButtonState(1);
+            setButtonState(2);
         } else {
             console.log("URL is invalid");
             setAppMessage("不正なURLのためコンテンツを開けません");
@@ -296,7 +329,7 @@ const MainView = () => {
             // Data
             {}
         );
-        setButtonState(2);
+        setButtonState(3);
     };
     const onStopButton = () => {
         console.log("StopButton");
@@ -306,7 +339,7 @@ const MainView = () => {
             // Data
             {}
         );
-        setButtonState(0);
+        setButtonState(1);
     };
 
 
@@ -372,16 +405,33 @@ const MainView = () => {
                                      error={ !isBrowserURLValid }/>
                         </ListItemSecondaryAction>
                       </ListItem>
+                      <ListItem>
+                        <ListItemIcon>
+                          <DescriptionIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="CSVファイルの保存先" />
+                        <ListItemSecondaryAction>
+                          <div className={ classes.pathSelector }>
+                            <Typography className={ classes.destinationPath } variant="body1">
+                              { csvDestinationPath }
+                            </Typography>
+                            <Button variant="contained" color="primary"
+                                    onClick={ onSelectCsvDestinationPath }>
+                              参照
+                            </Button>
+                          </div>
+                        </ListItemSecondaryAction>
+                      </ListItem>
                     </List>
                   </AccordionDetails>
                   <AccordionActions className={ classes.setupAccordionActions }>
                     <ButtonGroup disableElevation variant="contained" color="primary">
                       <Button onClick={ onOpenBrowserButton }
-                              disabled={ buttonState === 0 ? false : true }>ブラウザを開く</Button>
+                              disabled={ buttonState === 1 ? false : true }>ブラウザを開く</Button>
                       <Button onClick={ onStartButton }
-                              disabled={ buttonState === 1 ? false : true }>計測開始</Button>
+                              disabled={ buttonState === 2 ? false : true }>計測開始</Button>
                       <Button onClick={ onStopButton }
-                              disabled={ buttonState === 2 ? false : true }>計測終了</Button>
+                              disabled={ buttonState === 3 ? false : true }>計測終了</Button>
                     </ButtonGroup>
                   </AccordionActions>
                 </Accordion>
