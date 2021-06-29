@@ -94,6 +94,7 @@
         "@material-ui/icons": "^4.11.2",
         "@material-ui/lab": "^4.0.0-alpha.58",
         "electron-squirrel-startup": "^1.0.0",
+        "fast-csv": "^4.3.6",
         "file-loader": "^6.2.0",
         "fs": "^0.0.1-security",
         "react": "^17.0.2",
