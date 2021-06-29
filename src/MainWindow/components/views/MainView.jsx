@@ -157,7 +157,7 @@ const MainView = () => {
         setAppMessage(arg.message);
         setAppMessageType(arg.type);
     };
-    const onSendDOMDataFromMainToMainWindow = (event, arg) => {
+    const onDOMDataFromMainToMainWindow = (event, arg) => {
         console.log(arg.coordinates.x + ", " + arg.coordinates.y);
         console.log(arg.tagName);
         console.log(arg.id);
@@ -178,13 +178,13 @@ const MainView = () => {
     useEffect(() => {
         // IPC Receive (from Main) Create Listener
         window.api.on("AppMessage", onAppMessage);
-        window.api.on("SendDOMDataFromMainToMainWindow", onSendDOMDataFromMainToMainWindow);
+        window.api.on("DOMDataFromMainToMainWindow", onDOMDataFromMainToMainWindow);
         window.api.on("ViewerClosed", onViewerClosed);
         // Cleanup
         return () => {
             // IPC Receive (from Main) Remove Listener
             window.api.remove("AppMessage", onAppMessage);
-            window.api.remove("SendDOMDataFromMainToMainWindow", onSendDOMDataFromMainToMainWindow);
+            window.api.remove("DOMDataFromMainToMainWindow", onDOMDataFromMainToMainWindow);
             window.api.remove("ViewerClosed", onViewerClosed);
         };
     }, []);
@@ -213,7 +213,7 @@ const MainView = () => {
         console.log("StartButton");
         window.api.send(
             // Channel
-            "Start",
+            "StartAnalysis",
             // Data
             {}
         );
@@ -223,7 +223,7 @@ const MainView = () => {
         console.log("StopButton");
         window.api.send(
             // Channel
-            "Stop",
+            "StopAnalysis",
             // Data
             {}
         );

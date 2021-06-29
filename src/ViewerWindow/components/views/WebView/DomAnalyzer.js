@@ -13,7 +13,7 @@ const { debounce } = require('throttle-debounce');
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOMAnalyzer was loaded.");
     //// IPC Receive (from Main) Create Listener
-    // ipcRenderer.on("SendGazeDataFromViewerToWebView", (event, arg) => {
+    // ipcRenderer.on("GazeDataFromViewerToWebView", (event, arg) => {
     //     console.log("Received Gaze Data: " + arg.data);
     // });
 });
@@ -48,7 +48,7 @@ document.addEventListener('mousemove', debounce(150, false, (event) => {
     console.log("aria-label: " + filteredElements[0].ariaLabel);
 
     ipcRenderer.sendToHost(
-        "SendDOMDataFromWebViewToViewer",
+        "DOMDataFromWebViewToViewer",
         {
             coordinates: {
                 x: event.clientX,

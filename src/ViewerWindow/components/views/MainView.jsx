@@ -24,7 +24,7 @@ function useHookWithRefCallback() {
             // You can now do what you need to, addEventListeners, measure, etc.
             node.addEventListener("ipc-message", (event) => {
                 switch (event.channel) {
-                    case "SendDOMDataFromWebViewToViewer":
+                    case "DOMDataFromWebViewToViewer":
                         console.log(event.args[0].coordinates.x + ", " + event.args[0].coordinates.y);
                         console.log(event.args[0].tagName);
                         console.log(event.args[0].id);
@@ -32,7 +32,7 @@ function useHookWithRefCallback() {
                         console.log(event.args[0].ariaLabel);
 
                         window.viewerIPCSend(
-                            "SendDOMDataFromViewerToMain",
+                            "DOMDataFromViewerToMain",
                             event.args[0]
                         );
                         break;
@@ -55,7 +55,7 @@ const WebView = React.forwardRef((props, ref) => {
     if (props.url === "") {
         return (null);
     } else {
-        // Attension: Preload attribute needs absolute path
+        // Attension: Preload attribute needs absolute path on the development computer
         return (
             <webview preload="file:///Users/kawa/Wakayama/2021/HCDLab/electron/eta-browser/src/ViewerWindow/components/views/WebView/DomAnalyzer.js"
                      ref={ ref }
@@ -73,59 +73,61 @@ const MainView = () => {
     const capturer = new Capturer("ETA Browser (Viewer)", "SaveBufferToFile");
 
     // useState
-    const [viewerUrl, setViewerUrl] = useState("");
+    const [viewerDestinationURL, setViewerDestinationURL] = useState("");
 
     // useRef
     const [webViewRefObj, webViewRef] = useHookWithRefCallback();
 
     // IPC Receive Callbacks
-    const onViewerURL = (event, arg) => {
-        setViewerUrl(arg.url);
+    const onViewerDestinationURL = (event, arg) => {
+        setViewerDestinationURL(arg.url);
     };
     const onOpenDevTools = (event, arg) => {
         if (webViewRefObj.current && !webViewRefObj.current.isDevToolsOpened()) {
             webViewRefObj.current.openDevTools();
         }
     };
-    const onSendGazeDataFromMainToViewer = (event, arg) => {
+    const onGazeDataFromMainToViewer = (event, arg) => {
         if (webViewRefObj.current) {
             webViewRefObj.current.send(
-                "SendGazeDataFromViewerToWebView",
+                "GazeDataFromViewerToWebView",
                 arg
             );
         }
     };
-    const onStart = (event, arg) => {
-        console.log("Start");
+    const onStartAnalysis = (event, arg) => {
+        console.log("Start Analysis");
         capturer.start();
     };
-    const onStop = (event, arg) => {
-        console.log("Stop");
+    const onStopAnalysis = (event, arg) => {
+        console.log("Stop Analysis");
         capturer.stop();
     };
 
     // useEffect
     useEffect(() => {
         // IPC Receive (from Main) Create Listener
-        window.viewerIPCOn("ViewerURL", onViewerURL);
+        window.viewerIPCOn("ViewerDestinationURL", onViewerDestinationURL);
         window.viewerIPCOn("OpenDevTools", onOpenDevTools);
-        window.viewerIPCOn("SendGazeDataFromMainToViewer", onSendGazeDataFromMainToViewer);
-        window.viewerIPCOn("Start", onStart);
-        window.viewerIPCOn("Stop", onStop);
+        window.viewerIPCOn("GazeDataFromMainToViewer", onGazeDataFromMainToViewer);
+        window.viewerIPCOn("StartAnalysis", onStartAnalysis);
+        window.viewerIPCOn("StopAnalysis", onStopAnalysis);
         // Cleanup
         return () => {
             // IPC Receive (from Main) Remove Listener
-            window.viewerIPCRemove("ViewerURL", onViewerURL);
+            window.viewerIPCRemove("ViewerDestinationURL", onViewerDestinationURL);
             window.viewerIPCRemove("OpenDevTools", onOpenDevTools);
-            window.viewerIPCRemove("SendGazeDataFromMainToViewer", onSendGazeDataFromMainToViewer);
-            window.viewerIPCRemove("Start", onStart);
-            window.viewerIPCRemove("Stop", onStop);
+            window.viewerIPCRemove("GazeDataFromMainToViewer", onGazeDataFromMainToViewer);
+            window.viewerIPCRemove("StartAnalysis", onStartAnalysis);
+            window.viewerIPCRemove("StopAnalysis", onStopAnalysis);
+            // Stop the capturer
+            capturer.stop();
         };
     }, []);
 
     // JSX
     return (
-        <WebView url={ viewerUrl } ref={ webViewRef } />
+        <WebView url={ viewerDestinationURL } ref={ webViewRef } />
     );
 };
 

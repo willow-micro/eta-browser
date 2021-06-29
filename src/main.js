@@ -7,6 +7,7 @@ const path = require('path');
 const fs = require('fs');
 // User
 const menuTemplate = require('./MenuTemplate.js');
+const Timekeeper = require('./Timekeeper.js');
 
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -17,6 +18,9 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 // Make windows object visible from entire the main script
 let mainWindow = null;
 let viewerWindow = null;
+
+// Timekeeper for timestamps
+const timekeeper = new Timekeeper();
 
 
 // Create the main window
@@ -80,8 +84,8 @@ app.on('activate', () => {
 // IPC Message Rx (from Renderer)
 ipcMain.on("OpenBrowser", (event, arg) => {
     // Get URL
-    let viewerURL = arg.url;
-    console.log("OpenBrowser URL: " + viewerURL);
+    let viewerDestinationURL = arg.url;
+    console.log("OpenBrowser URL: " + viewerDestinationURL);
 
     // Make eta browser window
     viewerWindow = new BrowserWindow({
@@ -119,10 +123,10 @@ ipcMain.on("OpenBrowser", (event, arg) => {
     viewerWindow.webContents.once('dom-ready', () => {
         viewerWindow.webContents.send(
             // Channel name
-            "ViewerURL",
+            "ViewerDestinationURL",
             // Data
             {
-                url: viewerURL
+                url: viewerDestinationURL
             }
         );
     });
@@ -140,20 +144,23 @@ ipcMain.on("OpenBrowser", (event, arg) => {
 
 });
 
-ipcMain.on("Start", (event, arg) => {
-    console.log("Start");
+ipcMain.on("StartAnalysis", (event, arg) => {
+    console.log("Start Analysis");
+    timekeeper.startCounting();
     viewerWindow.webContents.send(
         // Channel name
-        "Start",
+        "StartAnalysis",
         // Data
         {}
     );
 });
-ipcMain.on("Stop", (event, arg) => {
-    console.log("Stop");
+ipcMain.on("StopAnalysis", (event, arg) => {
+    console.log("Stop Analysis");
+    console.log(`Analysis ended with ${ timekeeper.getElapsedTime() }ms.`);
+    timekeeper.stopCounting();
     viewerWindow.webContents.send(
         // Channel name
-        "Stop",
+        "StopAnalysis",
         // Data
         {}
     );
@@ -207,14 +214,14 @@ ipcMain.on("SaveBufferToFile", (event, arg) => {
 });
 
 
-ipcMain.on("SendDOMDataFromViewerToMain", (event, arg) => {
+ipcMain.on("DOMDataFromViewerToMain", (event, arg) => {
     // console.log(arg.coordinates.x + ", " + arg.coordinates.y);
     // console.log(arg.type);
     // console.log(arg.role);
     // console.log(arg.ariaLabel);
     mainWindow.webContents.send(
         // Channel name
-        "SendDOMDataFromMainToMainWindow",
+        "DOMDataFromMainToMainWindow",
         // Data
         arg
     );
