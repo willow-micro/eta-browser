@@ -23,11 +23,9 @@ let viewerWindow = null;
 // Timekeeper for timestamps
 const timekeeper = new Timekeeper();
 // CSV Format Stream
-const csvFormatStream = format({
-    headers: true
-});
-const csvSaveStream = fs.createWriteStream("record.csv");
-
+let csvFormatStream = null;
+let csvSaveStream = null;
+let csvSavePath = "";
 
 // Create the main window
 const createWindow = () => {
@@ -125,6 +123,7 @@ ipcMain.on("OpenBrowser", (event, arg) => {
         );
         isRecording = false;
         csvFormatStream.end();
+        csvFormatStream = null;
     });
 
     // Send Destination URL when the viewer window is ready
@@ -152,6 +151,83 @@ ipcMain.on("OpenBrowser", (event, arg) => {
 
 });
 
+ipcMain.on("RequestCsvDestinationPath", (event, arg) => {
+    const filePath = dialog.showSaveDialog(mainWindow, {
+        buttonLabel: "Save",
+        filters: [
+            {
+                name: 'Comma Separated Values',
+                extensions: ["csv"]
+            },
+        ],
+        properties:[
+            "createDirectory",
+        ]
+    }).then(result => {
+        if (result.filePath !== undefined) { // If Cancelled, skip it
+            // Respond CSV Path
+            mainWindow.webContents.send(
+                // Channel name
+                "RespondCsvDestinationPath",
+                // Data
+                {
+                    path: result.filePath
+                }
+            );
+            // Store path
+            csvSavePath = result.filePath;
+        }
+    });
+});
+
+ipcMain.on("SaveBufferToFile", (event, arg) => {
+    console.log("SaveBufferToFile");
+    const buffer = arg.buffer;
+    // Write File
+    const filePath = dialog.showSaveDialog(mainWindow, {
+        buttonLabel: "Save",
+        filters: [
+            {
+                name: 'WebM Video Format',
+                extensions: ["webm"]
+            },
+        ],
+        properties:[
+            "createDirectory",
+        ]
+    }).then(result => {
+        if (result.filePath !== undefined) { // If Cancelled, skip it
+            fs.writeFile(result.filePath, buffer, (error) => {
+                if (error) {
+                    console.log("Error in save desktopCapture");
+                    console.log(error);
+                    // Send App Message
+                    mainWindow.webContents.send(
+                        "AppMessage",
+                        {
+                            message: "キャプチャを保存できません",
+                            type: "error"
+                        }
+                    );
+                } else {
+                    // Success
+                    console.log("Successfully Saved a Captured Video");
+                    // Send App Message
+                    mainWindow.webContents.send(
+                        // Channel name
+                        "AppMessage",
+                        // Data
+                        {
+                            message: "キャプチャを保存しました",
+                            type: "success"
+                        }
+                    );
+                }
+            });
+        }
+    });
+});
+
 ipcMain.on("StartAnalysis", (event, arg) => {
     console.log("Start Analysis");
     viewerWindow.webContents.send(
@@ -162,6 +238,10 @@ ipcMain.on("StartAnalysis", (event, arg) => {
     );
     timekeeper.startCounting();
     isRecording = true;
+    csvFormatStream = format({
+        headers: true
+    });
+    csvSaveStream = fs.createWriteStream(csvSavePath);
     csvFormatStream.pipe(csvSaveStream);
 });
 ipcMain.on("StopAnalysis", (event, arg) => {
@@ -176,6 +256,9 @@ ipcMain.on("StopAnalysis", (event, arg) => {
     timekeeper.stopCounting();
     isRecording = false;
     csvFormatStream.end();
+    csvFormatStream = null;
+    csvSaveStream.end();
+    csvSaveStream = null;
 });
 
 
@@ -192,14 +275,14 @@ ipcMain.on("DOMDataFromViewerToMain", (event, arg) => {
             X: arg.coordinates.x,
             Y: arg.coordinates.y,
             MainElemIsTarget: arg.mainElement.isTarget,
-            MainElemTagName: arg.mainElement.tagName,
-            MainElemId: arg.mainElement.id,
-            MainElemRole: arg.mainElement.role,
-            MainElemAriaLabel: arg.mainElement.ariaLabel,
             ParentElemIsTarget: arg.parentElement.isTarget,
+            MainElemTagName: arg.mainElement.tagName,
             ParentElemTagName: arg.parentElement.tagName,
+            MainElemId: arg.mainElement.id,
             ParentElemId: arg.parentElement.id,
+            MainElemRole: arg.mainElement.role,
             ParentElemRole: arg.parentElement.role,
+            MainElemAriaLabel: arg.mainElement.ariaLabel,
             ParentElemAriaLabel: arg.parentElement.ariaLabel,
             ElemPath: arg.elemPath,
             ElemPathAll: arg.elemPathAll
