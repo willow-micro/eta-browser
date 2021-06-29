@@ -123,9 +123,13 @@ ipcMain.on("OpenBrowser", (event, arg) => {
             // Data
             {}
         );
-        isRecording = false;
-        csvFormatStream.end();
-        csvFormatStream = null;
+        if (isRecording) {
+            timekeeper.stopCounting();
+            isRecording = false;
+            csvFormatStream.end();
+            csvFormatStream = null;
+            csvSaveStream = null;
+        }
     });
 
     // Send Destination URL when the viewer window is ready
@@ -283,7 +287,6 @@ ipcMain.on("StopAnalysis", (event, arg) => {
     isRecording = false;
     csvFormatStream.end();
     csvFormatStream = null;
-    csvSaveStream.end();
     csvSaveStream = null;
 });
 
