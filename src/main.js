@@ -5,10 +5,11 @@
 const { electron, app, BrowserWindow, ipcMain, Menu, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { format } = require('@fast-csv/format');
 // User
 const menuTemplate = require('./MenuTemplate.js');
 const Timekeeper = require('./Timekeeper.js');
-
+let isRecording = false;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -21,6 +22,11 @@ let viewerWindow = null;
 
 // Timekeeper for timestamps
 const timekeeper = new Timekeeper();
+// CSV Format Stream
+const csvFormatStream = format({
+    headers: true
+});
+const csvSaveStream = fs.createWriteStream("record.csv");
 
 
 // Create the main window
@@ -117,6 +123,8 @@ ipcMain.on("OpenBrowser", (event, arg) => {
             // Data
             {}
         );
+        isRecording = false;
+        csvFormatStream.end();
     });
 
     // Send Destination URL when the viewer window is ready
@@ -146,85 +154,57 @@ ipcMain.on("OpenBrowser", (event, arg) => {
 
 ipcMain.on("StartAnalysis", (event, arg) => {
     console.log("Start Analysis");
-    timekeeper.startCounting();
     viewerWindow.webContents.send(
         // Channel name
         "StartAnalysis",
         // Data
         {}
     );
+    timekeeper.startCounting();
+    isRecording = true;
+    csvFormatStream.pipe(csvSaveStream);
 });
 ipcMain.on("StopAnalysis", (event, arg) => {
     console.log("Stop Analysis");
-    console.log(`Analysis ended with ${ timekeeper.getElapsedTime() }ms.`);
-    timekeeper.stopCounting();
     viewerWindow.webContents.send(
         // Channel name
         "StopAnalysis",
         // Data
         {}
     );
-});
-ipcMain.on("SaveBufferToFile", (event, arg) => {
-    console.log("SaveBufferToFile");
-    const buffer = arg.buffer;
-    // Write File
-    const filePath = dialog.showSaveDialog(mainWindow, {
-        buttonLabel: "Save",
-        filters: [
-            {
-                name: 'WebM Video Format',
-                extensions: ["webm"]
-            },
-        ],
-        properties:[
-            "createDirectory",
-        ]
-    }).then(result => {
-        if (result.filePath !== undefined) { // Cancelled
-            fs.writeFile(result.filePath, buffer, (error) => {
-                if (error) {
-                    console.log("Error in save desktopCapture");
-                    console.log(error);
-                    // Send App Message
-                    mainWindow.webContents.send(
-                        "AppMessage",
-                        {
-                            message: "キャプチャを保存できません",
-                            type: "error"
-                        }
-                    );
-                } else {
-                    // Success
-                    console.log("Successfully Saved a Captured Video");
-                    // Send App Message
-                    mainWindow.webContents.send(
-                        // Channel name
-                        "AppMessage",
-                        // Data
-                        {
-                            message: "キャプチャを保存しました",
-                            type: "success"
-                        }
-                    );
-                }
-            });
-        }
-    });
+    console.log(`Analysis ended with ${ timekeeper.getElapsedTime() }ms.`);
+    timekeeper.stopCounting();
+    isRecording = false;
+    csvFormatStream.end();
 });
 
 
 ipcMain.on("DOMDataFromViewerToMain", (event, arg) => {
-    // console.log(arg.mainElement.coordinates.x + ", " + arg.mainElement.coordinates.y);
-    // console.log(arg.mainElement.type);
-    // console.log(arg.mainElement.role);
-    // console.log(arg.mainElement.ariaLabel);
     mainWindow.webContents.send(
         // Channel name
         "DOMDataFromMainToMainWindow",
         // Data
         arg
     );
+    if (isRecording) {
+        csvFormatStream.write({
+            Time: timekeeper.getElapsedTime(),
+            X: arg.coordinates.x,
+            Y: arg.coordinates.y,
+            MainElemIsTarget: arg.mainElement.isTarget,
+            MainElemTagName: arg.mainElement.tagName,
+            MainElemId: arg.mainElement.id,
+            MainElemRole: arg.mainElement.role,
+            MainElemAriaLabel: arg.mainElement.ariaLabel,
+            ParentElemIsTarget: arg.parentElement.isTarget,
+            ParentElemTagName: arg.parentElement.tagName,
+            ParentElemId: arg.parentElement.id,
+            ParentElemRole: arg.parentElement.role,
+            ParentElemAriaLabel: arg.parentElement.ariaLabel,
+            ElemPath: arg.elemPath,
+            ElemPathAll: arg.elemPathAll
+        });
+    }
 });
 
 ipcMain.on("AppMessage", (event, arg) => {
