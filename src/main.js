@@ -25,7 +25,9 @@ const timekeeper = new Timekeeper();
 // CSV Format Stream
 let csvFormatStream = null;
 let csvSaveStream = null;
-let csvSavePath = "";
+let csvDestinationPath = "";
+// Desktop Capture
+let captureDestinationPath = "";
 
 // Create the main window
 const createWindow = () => {
@@ -164,26 +166,27 @@ ipcMain.on("RequestCsvDestinationPath", (event, arg) => {
             "createDirectory",
         ]
     }).then(result => {
-        if (result.filePath !== undefined) { // If Cancelled, skip it
+        if (!result.canceled) { // If Cancelled, skip it
+            // Store CSV path
+            csvDestinationPath = result.filePath;
             // Respond CSV Path
             mainWindow.webContents.send(
                 // Channel name
                 "RespondCsvDestinationPath",
                 // Data
                 {
-                    path: result.filePath
+                    path: csvDestinationPath
                 }
             );
-            // Store path
-            csvSavePath = result.filePath;
+            // If capture path is not specified, use same path as csv for it
+            // Viewer has same behavior on it
+            if (captureDestinationPath === "") {
+                captureDestinationPath = result.filePath.substr(0, result.filePath.lastIndexOf(".")) + ".webm";
+            }
         }
     });
 });
-
-ipcMain.on("SaveBufferToFile", (event, arg) => {
-    console.log("SaveBufferToFile");
-    const buffer = arg.buffer;
-    // Write File
+ipcMain.on("RequestCaptureDestinationPath", (event, arg) => {
     const filePath = dialog.showSaveDialog(mainWindow, {
         buttonLabel: "Save",
         filters: [
@@ -196,34 +199,57 @@ ipcMain.on("SaveBufferToFile", (event, arg) => {
             "createDirectory",
         ]
     }).then(result => {
-        if (result.filePath !== undefined) { // If Cancelled, skip it
-            fs.writeFile(result.filePath, buffer, (error) => {
-                if (error) {
-                    console.log("Error in save desktopCapture");
-                    console.log(error);
-                    // Send App Message
-                    mainWindow.webContents.send(
-                        "AppMessage",
-                        {
-                            message: "キャプチャを保存できません",
-                            type: "error"
-                        }
-                    );
-                } else {
-                    // Success
-                    console.log("Successfully Saved a Captured Video");
-                    // Send App Message
-                    mainWindow.webContents.send(
-                        // Channel name
-                        "AppMessage",
-                        // Data
-                        {
-                            message: "キャプチャを保存しました",
-                            type: "success"
-                        }
-                    );
+        if (!result.canceled) { // If Cancelled, skip it
+            // Store capture path
+            captureDestinationPath = result.filePath;
+            // Respond capture path
+            mainWindow.webContents.send(
+                // Channel name
+                "RespondCaptureDestinationPath",
+                // Data
+                {
+                    path: captureDestinationPath
                 }
-            });
+            );
+            // If csv path is not specified, use same path as capture for it
+            // Viewer has same behavior on it
+            if (csvDestinationPath === "") {
+                csvDestinationPath = result.filePath.substr(0, result.filePath.lastIndexOf(".")) + ".csv";
+            }
+        }
+    });
+});
+
+
+ipcMain.on("SaveBufferToFile", (event, arg) => {
+    console.log("SaveBufferToFile");
+    const buffer = arg.buffer;
+    // Write File
+    fs.writeFile(captureDestinationPath, buffer, (error) => {
+        if (error) {
+            console.log("Error in save desktopCapture");
+            console.log(error);
+            // Send App Message
+            mainWindow.webContents.send(
+                "AppMessage",
+                {
+                    message: "キャプチャを保存できません",
+                    type: "error"
+                }
+            );
+        } else {
+            // Success
+            console.log("Successfully Saved a Captured Video");
+            // Send App Message
+            mainWindow.webContents.send(
+                // Channel name
+                "AppMessage",
+                // Data
+                {
+                    message: "キャプチャを保存しました",
+                    type: "success"
+                }
+            );
         }
     });
 });
@@ -241,7 +267,7 @@ ipcMain.on("StartAnalysis", (event, arg) => {
     csvFormatStream = format({
         headers: true
     });
-    csvSaveStream = fs.createWriteStream(csvSavePath);
+    csvSaveStream = fs.createWriteStream(csvDestinationPath);
     csvFormatStream.pipe(csvSaveStream);
 });
 ipcMain.on("StopAnalysis", (event, arg) => {

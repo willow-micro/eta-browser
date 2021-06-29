@@ -12,6 +12,7 @@ import { Alert } from '@material-ui/lab';
 import { grey, blueGrey, brown } from '@material-ui/core/colors';
 import WebIcon from '@material-ui/icons/Web';
 import DescriptionIcon from '@material-ui/icons/Description';
+import TheatersIcon from '@material-ui/icons/Theaters';
 import SearchIcon from '@material-ui/icons/Search';
 import CodeIcon from '@material-ui/icons/Code';
 import LabelIcon from '@material-ui/icons/Label';
@@ -187,6 +188,8 @@ const MainView = () => {
     const [isBrowserURLValid, setIsBrowserURLValid] = useState(true);
     // CSV Destination Path
     const [csvDestinationPath, setCsvDestinationPath] = useState("");
+    // Capture Destination Path
+    const [captureDestinationPath, setCaptureDestinationPath] = useState("");
 
     // Coordinates
     const [domCoordinateX, setDomCoordinateX] = useState(0);
@@ -217,20 +220,12 @@ const MainView = () => {
         setAppMessageType(arg.type);
     };
     const onRespondCsvDestinationPath = (event, arg) => {
-        if (arg.path !== "") {
-            setCsvDestinationPath(arg.path);
-            if (buttonState === 0) {
-                setButtonState(1);
-            }
-        }
+        setCsvDestinationPath(arg.path);
+    };
+    const onRespondCaptureDestinationPath = (event, arg) => {
+        setCaptureDestinationPath(arg.path);
     };
     const onDOMDataFromMainToMainWindow = (event, arg) => {
-        /* console.log(arg.mainElement.coordinates.x + ", " + arg.mainElement.coordinates.y);
-         * console.log(arg.mainElement.tagName);
-         * console.log(arg.mainElement.id);
-         * console.log(arg.mainElement.role);
-         * console.log(arg.mainElement.ariaLabel); */
-
         // Coordinates
         setDomCoordinateX(arg.coordinates.x);
         setDomCoordinateY(arg.coordinates.y);
@@ -280,6 +275,7 @@ const MainView = () => {
         // IPC Receive (from Main) Create Listener
         window.api.on("AppMessage", onAppMessage);
         window.api.on("RespondCsvDestinationPath", onRespondCsvDestinationPath);
+        window.api.on("RespondCaptureDestinationPath", onRespondCaptureDestinationPath);
         window.api.on("DOMDataFromMainToMainWindow", onDOMDataFromMainToMainWindow);
         window.api.on("ViewerClosed", onViewerClosed);
         // Cleanup
@@ -287,17 +283,41 @@ const MainView = () => {
             // IPC Receive (from Main) Remove Listener
             window.api.remove("AppMessage", onAppMessage);
             window.api.remove("RespondCsvDestinationPath", onRespondCsvDestinationPath);
+            window.api.remove("RespondCaptureDestinationPath", onRespondCaptureDestinationPath);
             window.api.remove("DOMDataFromMainToMainWindow", onDOMDataFromMainToMainWindow);
             window.api.remove("ViewerClosed", onViewerClosed);
         };
     }, []);
 
+    useEffect(() => {
+        if (buttonState === 0) {
+            if (csvDestinationPath === "" && captureDestinationPath !== "") {
+                // CSV path is not initialized, but capture path is initialized
+                // Initialize csv path with capture path
+                setCsvDestinationPath(captureDestinationPath.substr(0, captureDestinationPath.lastIndexOf(".")) + ".csv");
+                setButtonState(1);
+            } else if (csvDestinationPath !== "" && captureDestinationPath === "") {
+                // Capture path is not initialized, but csv path is initialized
+                // Initialize capture path with csv path
+                setCaptureDestinationPath(csvDestinationPath.substr(0, csvDestinationPath.lastIndexOf(".")) + ".webm");
+                setButtonState(1);
+            }
+        }
+    }, [csvDestinationPath, captureDestinationPath]);
 
     // onClicks
     const onSelectCsvDestinationPath = () => {
         window.api.send(
             // Channel
             "RequestCsvDestinationPath",
+            // Data
+            {}
+        );
+    };
+    const onSelectCaptureDestinationPath = () => {
+        window.api.send(
+            // Channel
+            "RequestCaptureDestinationPath",
             // Data
             {}
         );
@@ -394,7 +414,7 @@ const MainView = () => {
                         <ListItemIcon>
                           <WebIcon />
                         </ListItemIcon>
-                        <ListItemText primary="URL" />
+                        <ListItemText primary="対象のURL" />
                         <ListItemSecondaryAction>
                           <TextField className={ classes.textfield }
                                      name="browserURLField"
@@ -417,6 +437,23 @@ const MainView = () => {
                             </Typography>
                             <Button variant="contained" color="primary"
                                     onClick={ onSelectCsvDestinationPath }>
+                              参照
+                            </Button>
+                          </div>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon>
+                          <TheatersIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="キャプチャの保存先" />
+                        <ListItemSecondaryAction>
+                          <div className={ classes.pathSelector }>
+                            <Typography className={ classes.destinationPath } variant="body1">
+                              { captureDestinationPath }
+                            </Typography>
+                            <Button variant="contained" color="primary"
+                                    onClick={ onSelectCaptureDestinationPath }>
                               参照
                             </Button>
                           </div>

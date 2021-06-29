@@ -25,12 +25,6 @@ function useHookWithRefCallback() {
             node.addEventListener("ipc-message", (event) => {
                 switch (event.channel) {
                     case "DOMDataFromWebViewToViewer":
-                        /* console.log(event.args[0].mainElement.coordinates.x + ", " + event.args[0].mainElement.coordinates.y);
-                         * console.log(event.args[0].mainElement.tagName);
-                         * console.log(event.args[0].mainElement.id);
-                         * console.log(event.args[0].mainElement.role);
-                         * console.log(event.args[0].mainElement.ariaLabel); */
-
                         window.viewerIPCSend(
                             "DOMDataFromViewerToMain",
                             event.args[0]
@@ -97,11 +91,11 @@ const MainView = () => {
     };
     const onStartAnalysis = (event, arg) => {
         console.log("Start Analysis");
-        //capturer.start();
+        capturer.start();
     };
     const onStopAnalysis = (event, arg) => {
         console.log("Stop Analysis");
-        //capturer.stop();
+        capturer.stop();
     };
 
     // useEffect

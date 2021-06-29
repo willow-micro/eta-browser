@@ -61,12 +61,6 @@ document.addEventListener('mousemove', debounce(150, false, (event) => {
         }
     }
 
-    // The Deepest Matched Element (Main)
-    // console.log("type: " + filteredElements[0].tagName.toLowerCase());
-    // console.log("id: " + filteredElements[0].id);
-    // console.log("role: " + filteredElements[0].getAttribute("role"));
-    // console.log("aria-label: " + filteredElements[0].ariaLabel);
-
     if (filteredElements.length >= 2) {
         // There is Main and Parent target elements (and more)
         ipcRenderer.sendToHost(
