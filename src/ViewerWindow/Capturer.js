@@ -8,77 +8,64 @@ const { desktopCapturer } = require('electron');
 // User
 
 class Capturer {
-    constructor(windowTitle, receiveChannel) {
+    constructor(bitRate, windowTitle, blobReceiveChannel) {
         // Variables for Desktop Capturing
         this.targetWindowTitle = windowTitle;
-        this.receiveChannel = receiveChannel;
-        this.streamRecorder = null;
-        this.recordedChunks = [];
+        this.blobReceiveChannel = blobReceiveChannel;
+        this.mediaRecorder = null;
+        this.bitRate = bitRate;
 
         // Callbacks for DesktopCapturer
+        //// Retrieve getUserMedia stream
         this.handleCaptureStream = (captureStream) => {
-            this.streamRecorder = new MediaRecorder(captureStream);
-            this.streamRecorder.ondataavailable = (event) => {
-                this.recordedChunks.push(event.data);
+            // Initialize MediaRecorder
+            this.mediaRecorder = new MediaRecorder(captureStream, {
+                mimeType: 'video/webm',
+                videoBitsPerSecond: this.bitRate
+            });
+
+            // Get blob chunks
+            this.mediaRecorder.ondataavailable = (event) => {
+                const blobChunk = event.data;
+                // Create Blob (a part of)
+                //const blob = new Blob(arg.blobChunk, { type: 'video/webm' });
+
+                // Convert to ArrayBuffer from Blob
+                blobChunk.arrayBuffer().then(arrayBuffer => {
+                    // Convert to Uint8Array from ArrayBuffer
+                    const uint8Array = new Uint8Array(arrayBuffer);
+                    // Send a buffer
+                    window.viewerIPCSend(this.blobReceiveChannel, {
+                        uint8Array: uint8Array
+                    });
+                });
             };
-            this.streamRecorder.onstop = (event) => {
-                // Create Blob
-                const captureBlob = new Blob(this.recordedChunks, {type: 'video/webm'});
-                this.recordedChunks = [];
-                // Setup FileReader
-                const fileReader = new FileReader();
-                fileReader.onload = () => {
-                    // Create Buffer from Binary
-                    const binary = fileReader.result;
-                    let binaryArray = new Uint8Array(binary);
-                    // DeprecationWarning: Buffer() is deprecated due to security and usability issues
-                    //let buffer = new Buffer(binary.byteLength);
-                    // Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
-                    let buffer = Buffer.alloc(binary.byteLength);
-                    for (let i = 0; i < binaryArray.byteLength; i = (i+1)|0) { // Optimized for V8 Engine
-                        buffer[i] = binaryArray[i];
-                    }
-                    // Send Buffer
-                    window.viewerIPCSend(
-                        // Channel name
-                        this.receiveChannel,
-                        // Data
-                        {
-                            buffer: buffer
-                        }
-                    );
-                };
-                // Execute FileReader
-                fileReader.readAsArrayBuffer(captureBlob);
-                // Close streamRecorder
-                this.streamRecorder = null;
+
+            // When capturing stops
+            this.mediaRecorder.onstop = (event) => {
+                // Attension: ondataavailable is automatically called after stop() called
+                // Close mediaRecorder
+                this.mediaRecorder = null;
             };
-            this.streamRecorder.start();
+
+            // Start MediaRecorder
+            this.mediaRecorder.start(1000); // Blob chunks timeslice: 1000[ms]
+
             // Send App Message
-            window.viewerIPCSend(
-                // Channel name
-                "AppMessage",
-                // Data
-                {
-                    message: "キャプチャを開始しました",
-                    type: "success"
-                }
-            );
+            window.viewerIPCSend("AppMessage", {
+                message: "キャプチャを開始しました",
+                type: "success"
+            });
         };
 
+        //// Error handling
         this.handleCaptureStreamError = (error) => {
-            console.log("Error in start desktopCapture");
             console.log(error);
             // Send App Message
-            window.viewerIPCSend(
-                // Channel name
-                "AppMessage",
-                // Data
-                {
-                    message: "キャプチャを開始できません",
-                    type: "error"
-                }
-            );
+            window.viewerIPCSend("AppMessage", {
+                message: "キャプチャを開始できません",
+                type: "error"
+            });
         };
     }
 
@@ -100,7 +87,8 @@ class Capturer {
                                 maxHeight: 1600
                             }
                         }
-                    }).then((stream) => { this.handleCaptureStream(stream) })
+                    })
+                        .then((stream) => { this.handleCaptureStream(stream) })
                         .catch((error) => { this.handleCaptureStreamError(error) });
                 }
             }
@@ -109,8 +97,8 @@ class Capturer {
 
     // Stop Desktop Capturing
     stop(){
-        this.streamRecorder.stop();
-        this.streamRecorder = null;
+        this.mediaRecorder.stop();
+        this.mediaRecorder = null;
     }
 }
 

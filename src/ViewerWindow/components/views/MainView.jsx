@@ -64,7 +64,8 @@ const WebView = React.forwardRef((props, ref) => {
 // Main Component
 const MainView = () => {
 
-    const capturer = new Capturer("ETA Browser (Viewer)", "SaveBufferToFile");
+    // Create capturer with ( Bit rate, Target window, Blob chunk reveive channel )
+    const capturer = new Capturer(2000000, "ETA Browser (Viewer)", "CaptureBlobChunkFromViewerToMain");
 
     // useState
     const [viewerDestinationURL, setViewerDestinationURL] = useState("");
