@@ -25,10 +25,7 @@ function useHookWithRefCallback() {
             node.addEventListener("ipc-message", (event) => {
                 switch (event.channel) {
                     case "DOMDataFromWebViewToViewer":
-                        window.viewerIPCSend(
-                            "DOMDataFromViewerToMain",
-                            event.args[0]
-                        );
+                        window.viewerIPCSend("DOMDataFromViewerToMain", event.args[0]);
                         break;
                     default:
                         console.log("ch: " + event.channel + ", args: " + event.args);
@@ -65,7 +62,28 @@ const WebView = React.forwardRef((props, ref) => {
 const MainView = () => {
 
     // Create capturer with ( Bit rate, Target window, Blob chunk reveive channel )
-    const capturer = new Capturer(2000000, "ETA Browser (Viewer)", "CaptureBlobChunkFromViewerToMain");
+    const capturer = new Capturer(2000000, 1000);   // bit rate [bps], data retrieve timeslice [ms]
+    capturer.on("start", () => {
+        window.viewerIPCSend("AppMessage", {
+            message: "キャプチャを開始しました",
+            type: "info"
+        });
+    });
+    capturer.on("available", (data) => {
+        // Send a buffer
+        window.viewerIPCSend("CaptureDataChunkFromViewerToMain", {
+            uint8Array: data
+        });
+    });
+    capturer.on("error", (error) => {
+        window.viewerIPCSend("AppMessage", {
+            message: "キャプチャを開始できません",
+            type: "error"
+        });
+    });
+    capturer.on("stop", () => {
+        window.viewerIPCSend("CaptureEndedInViewer", {});
+    });
 
     // useState
     const [viewerDestinationURL, setViewerDestinationURL] = useState("");
@@ -84,15 +102,12 @@ const MainView = () => {
     };
     const onGazeDataFromMainToViewer = (event, arg) => {
         if (webViewRefObj.current) {
-            webViewRefObj.current.send(
-                "GazeDataFromViewerToWebView",
-                arg
-            );
+            webViewRefObj.current.send("GazeDataFromViewerToWebView", arg);
         }
     };
     const onStartAnalysis = (event, arg) => {
         console.log("Start Analysis");
-        capturer.start();
+        capturer.start("ETA Browser (Viewer)", 800, 2560, 600, 1600);   // title, min width, max width, min height, max height
     };
     const onStopAnalysis = (event, arg) => {
         console.log("Stop Analysis");

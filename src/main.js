@@ -29,6 +29,7 @@ let csvDestinationPath = "";
 // Desktop Capture
 let captureSaveStream = null;
 let captureDestinationPath = "";
+let isCaptureSaveStreamActive = false;
 
 // Create the main window
 const createWindow = () => {
@@ -92,7 +93,6 @@ app.on('activate', () => {
 ipcMain.on("OpenBrowser", (event, arg) => {
     // Get URL
     let viewerDestinationURL = arg.url;
-    console.log("OpenBrowser URL: " + viewerDestinationURL);
 
     // Make eta browser window
     viewerWindow = new BrowserWindow({
@@ -118,12 +118,7 @@ ipcMain.on("OpenBrowser", (event, arg) => {
     viewerWindow.on('closed', function() {
         viewerWindow = null;
         // Tell main window the browser is closed
-        mainWindow.webContents.send(
-            // Channel name
-            "ViewerClosed",
-            // Data
-            {}
-        );
+        mainWindow.webContents.send("ViewerClosed", {});
         if (isRecording) {
             timekeeper.stopCounting();
             isRecording = false;
@@ -142,12 +137,10 @@ ipcMain.on("OpenBrowser", (event, arg) => {
         viewerWindow.webContents.send("ViewerDestinationURL", {
             url: viewerDestinationURL
         });
-    });
-
-    // Send App Message
-    mainWindow.webContents.send("AppMessage", {
-        message: "コンテンツを開きました",
-        type: "info"
+        mainWindow.webContents.send("AppMessage", {
+            message: "コンテンツを開きました",
+            type: "info"
+        });
     });
 });
 
@@ -211,13 +204,19 @@ ipcMain.on("RequestCaptureDestinationPath", (event, arg) => {
 });
 
 
-ipcMain.on("CaptureBlobChunkFromViewerToMain", (event, arg) => {
-    if (captureSaveStream) {
+ipcMain.on("CaptureDataChunkFromViewerToMain", (event, arg) => {
+    if (isCaptureSaveStreamActive) {
         // Convert to Buffer from Uint8Array
         const buffer = Buffer.from(arg.uint8Array);
         // Write a buffer to the fs writable stream
         captureSaveStream.write(buffer);
     }
+});
+
+ipcMain.on("CaptureEndedInViewer", (event, arg) => {
+    // Capture Cleanup
+    captureSaveStream.end();
+    captureSaveStream = null;
 });
 
 // Start / Stop Analysis
@@ -230,9 +229,38 @@ ipcMain.on("StartAnalysis", (event, arg) => {
         headers: true
     });
     csvSaveStream = fs.createWriteStream(csvDestinationPath);
+    csvSaveStream.on("finish", () => {
+        mainWindow.webContents.send("AppMessage", {
+            message: "CSVを保存しました",
+            type: "success"
+        });
+    });
+    csvSaveStream.on("error", () => {
+        mainWindow.webContents.send("AppMessage", {
+            message: "CSVを記録中にエラーが発生しました",
+            type: "error"
+        });
+    });
     csvFormatStream.pipe(csvSaveStream);
     // Capture Setup
     captureSaveStream = fs.createWriteStream(captureDestinationPath);
+    isCaptureSaveStreamActive = true;
+    captureSaveStream.on("finish", () => {
+        mainWindow.webContents.send("AppMessage", {
+            message: "画面キャプチャを保存しました",
+            type: "success"
+        });
+    });
+    captureSaveStream.on("error", () => {
+        // After 'error', no further events other than 'close' should be emitted (including 'error' events)
+        mainWindow.webContents.send("AppMessage", {
+            message: "画面キャプチャを記録中にエラーが発生しました",
+            type: "error"
+        });
+    });
+    captureSaveStream.on("close", () => {
+        isCaptureSaveStreamActive = false;
+    });
 });
 ipcMain.on("StopAnalysis", (event, arg) => {
     viewerWindow.webContents.send("StopAnalysis", {}); // Thru
@@ -243,14 +271,7 @@ ipcMain.on("StopAnalysis", (event, arg) => {
     csvFormatStream.end();
     csvFormatStream = null;
     csvSaveStream = null;
-    // Capture Cleanup
-    captureSaveStream.end();
-    captureSaveStream = null;
-    // Send App Message
-    mainWindow.webContents.send("AppMessage", {
-        message: "キャプチャを保存しました",
-        type: "success"
-    });
+    // Wait for capture cleanup until the capturing finishes
 });
 
 // DOMData Thru and Store to CSV

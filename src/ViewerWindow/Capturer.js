@@ -1,19 +1,20 @@
 // -*- coding: utf-8-unix -*-
-// Utilities for Desktop Capturing, for ViewerWindow
+// Electron desktopCapturer's wrapper with Node.js EventEmitter
 
 // System
-// This is Unsafe, requires to make nodeIntegration true.
+// Actually this is Unsafe, requires to make nodeIntegration true.
 const { desktopCapturer } = require('electron');
+const { EventEmitter } = require("events");
 
 // User
 
-class Capturer {
-    constructor(bitRate, windowTitle, blobReceiveChannel) {
+
+class Capturer extends EventEmitter {
+    constructor(bitRate = 2500000, timeslice = NaN) {
+        super();
+
         // Variables for Desktop Capturing
-        this.targetWindowTitle = windowTitle;
-        this.blobReceiveChannel = blobReceiveChannel;
         this.mediaRecorder = null;
-        this.bitRate = bitRate;
 
         // Callbacks for DesktopCapturer
         //// Retrieve getUserMedia stream
@@ -21,70 +22,55 @@ class Capturer {
             // Initialize MediaRecorder
             this.mediaRecorder = new MediaRecorder(captureStream, {
                 mimeType: 'video/webm',
-                videoBitsPerSecond: this.bitRate
+                videoBitsPerSecond: bitRate
             });
-
-            // Get blob chunks
+            // Get data chunks
+            // [getUserMedia] -> stream -> [MediaRecorder] -> Blob -> ArrayBuffer -> Uint8Array -> [IPC] -> Buffer -> [WriteStream(fs)]
             this.mediaRecorder.ondataavailable = (event) => {
-                const blobChunk = event.data;
-                // Create Blob (a part of)
-                //const blob = new Blob(arg.blobChunk, { type: 'video/webm' });
-
                 // Convert to ArrayBuffer from Blob
-                blobChunk.arrayBuffer().then(arrayBuffer => {
+                event.data.arrayBuffer().then(arrayBuffer => {
                     // Convert to Uint8Array from ArrayBuffer
                     const uint8Array = new Uint8Array(arrayBuffer);
-                    // Send a buffer
-                    window.viewerIPCSend(this.blobReceiveChannel, {
-                        uint8Array: uint8Array
-                    });
+                    this.emit("available", uint8Array);
                 });
             };
-
             // When capturing stops
             this.mediaRecorder.onstop = (event) => {
                 // Attension: ondataavailable is automatically called after stop() called
                 // Close mediaRecorder
                 this.mediaRecorder = null;
+                this.emit("stop", null);
             };
-
             // Start MediaRecorder
-            this.mediaRecorder.start(1000); // Blob chunks timeslice: 1000[ms]
-
-            // Send App Message
-            window.viewerIPCSend("AppMessage", {
-                message: "キャプチャを開始しました",
-                type: "success"
-            });
+            if (Number.isInteger(timeslice)) {
+                this.mediaRecorder.start(timeslice); // Specify timeslice[ms]
+            } else {
+                this.mediaRecorder.start();
+            }
+            this.emit("start", null);
         };
-
         //// Error handling
         this.handleCaptureStreamError = (error) => {
-            console.log(error);
-            // Send App Message
-            window.viewerIPCSend("AppMessage", {
-                message: "キャプチャを開始できません",
-                type: "error"
-            });
+            this.emit("error", error);
         };
     }
 
     // Start / Stop Capturing Method
     // Start Desktop Capturing
-    start(){
+    start(targetTitle, minWidth, maxWidth, minHeight, maxHeight){
         desktopCapturer.getSources({ types: ['window', 'screen'] }).then(async sources => {
             for (const source of sources) {
-                if (source.name === this.targetWindowTitle) {
+                if (source.name === targetTitle) {
                     navigator.mediaDevices.getUserMedia({
                         audio: false,
                         video: {
                             mandatory: {
                                 chromeMediaSource: 'desktop',
                                 chromeMediaSourceId: source.id,
-                                minWidth: 1024,
-                                maxWidth: 2560,
-                                minHeight: 720,
-                                maxHeight: 1600
+                                minWidth: minWidth,
+                                maxWidth: maxWidth,
+                                minHeight: minHeight,
+                                maxHeight: maxHeight
                             }
                         }
                     })
