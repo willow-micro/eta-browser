@@ -1,106 +1,80 @@
 // -*- coding: utf-8-unix -*-
-// Utilities for Desktop Capturing, for ViewerWindow
+// Electron desktopCapturer's wrapper with Node.js EventEmitter
 
 // System
-// This is Unsafe, requires to make nodeIntegration true.
+// Actually this is Unsafe, requires to make nodeIntegration true.
 const { desktopCapturer } = require('electron');
+const { EventEmitter } = require("events");
 
 // User
 
-class Capturer {
-    constructor(windowTitle, receiveChannel) {
+
+class Capturer extends EventEmitter {
+    constructor(bitRate = 2500000, timeslice = NaN) {
+        super();
+
         // Variables for Desktop Capturing
-        this.targetWindowTitle = windowTitle;
-        this.receiveChannel = receiveChannel;
-        this.streamRecorder = null;
-        this.recordedChunks = [];
+        this.mediaRecorder = null;
 
         // Callbacks for DesktopCapturer
+        //// Retrieve getUserMedia stream
         this.handleCaptureStream = (captureStream) => {
-            this.streamRecorder = new MediaRecorder(captureStream);
-            this.streamRecorder.ondataavailable = (event) => {
-                this.recordedChunks.push(event.data);
+            // Initialize MediaRecorder
+            this.mediaRecorder = new MediaRecorder(captureStream, {
+                mimeType: 'video/webm',
+                videoBitsPerSecond: bitRate
+            });
+            // Get data chunks
+            // [getUserMedia] -> stream -> [MediaRecorder] -> Blob -> ArrayBuffer -> Uint8Array -> [IPC] -> Buffer -> [WriteStream(fs)]
+            this.mediaRecorder.ondataavailable = (event) => {
+                // Convert to ArrayBuffer from Blob
+                event.data.arrayBuffer().then(arrayBuffer => {
+                    // Convert to Uint8Array from ArrayBuffer
+                    const uint8Array = new Uint8Array(arrayBuffer);
+                    this.emit("available", uint8Array);
+                });
             };
-            this.streamRecorder.onstop = (event) => {
-                // Create Blob
-                const captureBlob = new Blob(this.recordedChunks, {type: 'video/webm'});
-                this.recordedChunks = [];
-                // Setup FileReader
-                const fileReader = new FileReader();
-                fileReader.onload = () => {
-                    // Create Buffer from Binary
-                    const binary = fileReader.result;
-                    let binaryArray = new Uint8Array(binary);
-                    // DeprecationWarning: Buffer() is deprecated due to security and usability issues
-                    //let buffer = new Buffer(binary.byteLength);
-                    // Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
-                    let buffer = Buffer.alloc(binary.byteLength);
-                    for (let i = 0; i < binaryArray.byteLength; i = (i+1)|0) { // Optimized for V8 Engine
-                        buffer[i] = binaryArray[i];
-                    }
-                    // Send Buffer
-                    window.viewerIPCSend(
-                        // Channel name
-                        this.receiveChannel,
-                        // Data
-                        {
-                            buffer: buffer
-                        }
-                    );
-                };
-                // Execute FileReader
-                fileReader.readAsArrayBuffer(captureBlob);
-                // Close streamRecorder
-                this.streamRecorder = null;
+            // When capturing stops
+            this.mediaRecorder.onstop = (event) => {
+                // Attension: ondataavailable is automatically called after stop() called
+                // Close mediaRecorder
+                this.mediaRecorder = null;
+                this.emit("stop", null);
             };
-            this.streamRecorder.start();
-            // Send App Message
-            window.viewerIPCSend(
-                // Channel name
-                "AppMessage",
-                // Data
-                {
-                    message: "キャプチャを開始しました",
-                    type: "success"
-                }
-            );
+            // Start MediaRecorder
+            if (Number.isInteger(timeslice)) {
+                this.mediaRecorder.start(timeslice); // Specify timeslice[ms]
+            } else {
+                this.mediaRecorder.start();
+            }
+            this.emit("start", null);
         };
-
+        //// Error handling
         this.handleCaptureStreamError = (error) => {
-            console.log("Error in start desktopCapture");
-            console.log(error);
-            // Send App Message
-            window.viewerIPCSend(
-                // Channel name
-                "AppMessage",
-                // Data
-                {
-                    message: "キャプチャを開始できません",
-                    type: "error"
-                }
-            );
+            this.emit("error", error);
         };
     }
 
     // Start / Stop Capturing Method
     // Start Desktop Capturing
-    start(){
+    start(targetTitle, minWidth, maxWidth, minHeight, maxHeight){
         desktopCapturer.getSources({ types: ['window', 'screen'] }).then(async sources => {
             for (const source of sources) {
-                if (source.name === this.targetWindowTitle) {
+                if (source.name === targetTitle) {
                     navigator.mediaDevices.getUserMedia({
                         audio: false,
                         video: {
                             mandatory: {
                                 chromeMediaSource: 'desktop',
                                 chromeMediaSourceId: source.id,
-                                minWidth: 1024,
-                                maxWidth: 2560,
-                                minHeight: 720,
-                                maxHeight: 1600
+                                minWidth: minWidth,
+                                maxWidth: maxWidth,
+                                minHeight: minHeight,
+                                maxHeight: maxHeight
                             }
                         }
-                    }).then((stream) => { this.handleCaptureStream(stream) })
+                    })
+                        .then((stream) => { this.handleCaptureStream(stream) })
                         .catch((error) => { this.handleCaptureStreamError(error) });
                 }
             }
@@ -109,8 +83,8 @@ class Capturer {
 
     // Stop Desktop Capturing
     stop(){
-        this.streamRecorder.stop();
-        this.streamRecorder = null;
+        this.mediaRecorder.stop();
+        this.mediaRecorder = null;
     }
 }
 

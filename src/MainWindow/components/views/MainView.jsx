@@ -181,6 +181,7 @@ const useStyles = makeStyles((theme) => ({
 const MainView = () => {
     // useState
     const [buttonState, setButtonState] = useState(0);
+    const [doesViewerWindowExists, setDoesViewerWindowExists] = useState(false);
 
     const [appMessage, setAppMessage] = useState("起動しました");
     const [appMessageType, setAppMessageType] = useState("success");
@@ -249,6 +250,7 @@ const MainView = () => {
     const onViewerClosed = (event, arg) => {
         // Button State
         setButtonState(1);
+        setDoesViewerWindowExists(false);
         // Coordinates
         setDomCoordinateX(0);
         setDomCoordinateY(0);
@@ -290,6 +292,7 @@ const MainView = () => {
     }, []);
 
     useEffect(() => {
+        // No active button
         if (buttonState === 0) {
             if (csvDestinationPath === "" && captureDestinationPath !== "") {
                 // CSV path is not initialized, but capture path is initialized
@@ -301,40 +304,38 @@ const MainView = () => {
                 // Initialize capture path with csv path
                 setCaptureDestinationPath(csvDestinationPath.substr(0, csvDestinationPath.lastIndexOf(".")) + ".webm");
                 setButtonState(1);
+            } else if (csvDestinationPath !== "" && captureDestinationPath !== "") {
+                // Both paths are not empty
+                if (doesViewerWindowExists === false) {
+                    // No Viewer exists
+                    setButtonState(1);
+                }
+            }
+        } else if (buttonState === 1) {
+            // "OpenBrowser" button is active
+            if (doesViewerWindowExists) {
+                // There is an opened browser
+                setButtonState(0);
             }
         }
-    }, [csvDestinationPath, captureDestinationPath]);
+    }, [csvDestinationPath, captureDestinationPath, buttonState, doesViewerWindowExists]);
 
     // onClicks
     const onSelectCsvDestinationPath = () => {
-        window.api.send(
-            // Channel
-            "RequestCsvDestinationPath",
-            // Data
-            {}
-        );
+        window.api.send("RequestCsvDestinationPath", {});
     };
     const onSelectCaptureDestinationPath = () => {
-        window.api.send(
-            // Channel
-            "RequestCaptureDestinationPath",
-            // Data
-            {}
-        );
+        window.api.send("RequestCaptureDestinationPath", {});
     };
 
     const onOpenBrowserButton = () => {
         if (isBrowserURLValid && browserURL.length > 0) {
             console.log("OpenBrowserButton");
-            window.api.send(
-                // Channel
-                "OpenBrowser",
-                // Data
-                {
-                    url: browserURL
-                }
-            );
+            window.api.send("OpenBrowser", {
+                url: browserURL
+            });
             setButtonState(2);
+            setDoesViewerWindowExists(true);
         } else {
             console.log("URL is invalid");
             setAppMessage("不正なURLのためコンテンツを開けません");
@@ -343,22 +344,12 @@ const MainView = () => {
     };
     const onStartButton = () => {
         console.log("StartButton");
-        window.api.send(
-            // Channel
-            "StartAnalysis",
-            // Data
-            {}
-        );
+        window.api.send("StartAnalysis", {});
         setButtonState(3);
     };
     const onStopButton = () => {
         console.log("StopButton");
-        window.api.send(
-            // Channel
-            "StopAnalysis",
-            // Data
-            {}
-        );
+        window.api.send("StopAnalysis", {});
         setButtonState(1);
     };
 
@@ -437,7 +428,7 @@ const MainView = () => {
                             </Typography>
                             <Button variant="contained" color="primary"
                                     onClick={ onSelectCsvDestinationPath }>
-                              参照
+                              参照…
                             </Button>
                           </div>
                         </ListItemSecondaryAction>
@@ -454,7 +445,7 @@ const MainView = () => {
                             </Typography>
                             <Button variant="contained" color="primary"
                                     onClick={ onSelectCaptureDestinationPath }>
-                              参照
+                              参照…
                             </Button>
                           </div>
                         </ListItemSecondaryAction>
@@ -462,7 +453,7 @@ const MainView = () => {
                     </List>
                   </AccordionDetails>
                   <AccordionActions className={ classes.setupAccordionActions }>
-                    <ButtonGroup disableElevation variant="contained" color="primary">
+                    <ButtonGroup variant="contained" color="primary">
                       <Button onClick={ onOpenBrowserButton }
                               disabled={ buttonState === 1 ? false : true }>ブラウザを開く</Button>
                       <Button onClick={ onStartButton }
