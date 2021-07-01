@@ -3,13 +3,14 @@ import React, { useState, useEffect } from 'react';
 //// Material-UI
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
-import { AppBar, Toolbar, Grid, Paper, Typography } from '@material-ui/core';
+import { AppBar, Toolbar, Grid, Paper, Typography, Tooltip } from '@material-ui/core';
 import { List, ListItem, ListItemIcon, ListItemText, ListItemSecondaryAction, Divider } from '@material-ui/core';
 import { Accordion, AccordionSummary, AccordionDetails, AccordionActions } from '@material-ui/core';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@material-ui/core';
-import { ButtonGroup, Button, TextField } from '@material-ui/core';
+import { IconButton, ButtonGroup, Button, TextField } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
 import { grey, blueGrey, brown } from '@material-ui/core/colors';
+import TuneIcon from '@material-ui/icons/Tune';
 import WebIcon from '@material-ui/icons/Web';
 import DescriptionIcon from '@material-ui/icons/Description';
 import TheatersIcon from '@material-ui/icons/Theaters';
@@ -122,6 +123,7 @@ const useStyles = makeStyles((theme) => ({
     },
     // ToolBar Title
     toolBarTitle: {
+        flexGrow: 1,
         marginLeft: theme.spacing( 2 ),
         userSelect: 'none'
     },
@@ -398,6 +400,11 @@ const MainViewContent = () => {
               <Typography className={ classes.toolBarTitle } variant="h6" component="h1" color="inherit">
                 コンソール
               </Typography>
+              <Tooltip title="分析条件の変更">
+                <IconButton color="inherit" aria-label="分析条件の変更">
+                  <TuneIcon />
+                </IconButton>
+              </Tooltip>
             </Toolbar>
           </AppBar>
           { /* Content */ }
