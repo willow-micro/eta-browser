@@ -80,14 +80,11 @@ const menuTemplate = [
             {
                 label: 'Open the DevTools for the webview...',
                 click: (menuItem, browserWindow, event) => {
-                    // IPC Message Tx (to Renderer)
-                    if (browserWindow.webContents) {
-                        browserWindow.webContents.send(
-                            // Channel name
-                            "OpenDevTools",
-                            // Data
-                            {}
-                        );
+                    // IPC Message Tx (to Veiwer Window Renderer)
+                    if (browserWindow) {
+                        if (browserWindow.title === "ETA Browser (Viewer)") {
+                            browserWindow.webContents.send("OpenDevTools", {});
+                        }
                     }
                 }
             }
