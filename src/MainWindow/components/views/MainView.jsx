@@ -13,6 +13,7 @@ import { grey, blueGrey, brown } from '@material-ui/core/colors';
 import WebIcon from '@material-ui/icons/Web';
 import DescriptionIcon from '@material-ui/icons/Description';
 import TheatersIcon from '@material-ui/icons/Theaters';
+import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import SearchIcon from '@material-ui/icons/Search';
 import CodeIcon from '@material-ui/icons/Code';
 import LabelIcon from '@material-ui/icons/Label';
@@ -27,16 +28,17 @@ import { SnackbarProvider, useSnackbar } from 'notistack';
 // User
 
 // Colors
+// Material Design Color Tool: https://material.io/resources/color/#!/?view.left=0&view.right=0&primary.color=455A64&secondary.color=8D6E63&primary.text.color=FAFAFA&secondary.text.color=FAFAFA
 const SystemColor = {
-    Primary: blueGrey[500],
-    Secondary: brown[500],
+    Primary: blueGrey[700],
+    Secondary: brown[400],
     PrimaryText: grey[50],
     SecondaryText: grey[50],
     White: grey[50],
     Black: grey[900],
     LightGrey: grey[100],
     DarkGrey: grey[300],
-    ExtraDarkGrey: grey[500],
+    ExtraDarkGrey: grey[500]
 };
 
 // Material-UI Custom Theme Application
@@ -162,7 +164,8 @@ const useStyles = makeStyles((theme) => ({
     // Destination Path
     destinationPath: {
         marginRight: theme.spacing( 2 ),
-        color: SystemColor.Black
+        color: SystemColor.Black,
+        textAlign: 'right'
     },
     // Debug Table Heading
     debugTableHeading: {
@@ -423,7 +426,6 @@ const MainViewContent = () => {
                       <ListItemSecondaryAction>
                         <TextField className={ classes.textfield }
                                    name="browserURLField"
-                                   label="Webコンテンツ"
                                    helperText={ !isBrowserURLValid && "URLが不正です" }
                                    value={ browserURL }
                                    onChange={ onBrowserURLChange }
@@ -434,34 +436,24 @@ const MainViewContent = () => {
                       <ListItemIcon>
                         <DescriptionIcon />
                       </ListItemIcon>
-                      <ListItemText primary="CSVファイルの保存先" />
+                      <ListItemText primary="CSVファイルの保存先" secondary={ csvDestinationPath } />
                       <ListItemSecondaryAction>
-                        <div className={ classes.pathSelector }>
-                          <Typography className={ classes.destinationPath } variant="body1">
-                            { csvDestinationPath }
-                          </Typography>
-                          <Button variant="contained" color="primary"
-                                  onClick={ onSelectCsvDestinationPath }>
-                            参照…
-                          </Button>
-                        </div>
+                        <Button variant="contained" color="primary" endIcon={ <OpenInNewIcon /> }
+                                onClick={ onSelectCsvDestinationPath }>
+                          参照
+                        </Button>
                       </ListItemSecondaryAction>
                     </ListItem>
                     <ListItem>
                       <ListItemIcon>
                         <TheatersIcon />
                       </ListItemIcon>
-                      <ListItemText primary="キャプチャの保存先" />
+                      <ListItemText primary="キャプチャの保存先" secondary={ captureDestinationPath } />
                       <ListItemSecondaryAction>
-                        <div className={ classes.pathSelector }>
-                          <Typography className={ classes.destinationPath } variant="body1">
-                            { captureDestinationPath }
-                          </Typography>
-                          <Button variant="contained" color="primary"
-                                  onClick={ onSelectCaptureDestinationPath }>
-                            参照…
-                          </Button>
-                        </div>
+                        <Button variant="contained" color="primary" endIcon={ <OpenInNewIcon /> }
+                                onClick={ onSelectCaptureDestinationPath }>
+                          参照
+                        </Button>
                       </ListItemSecondaryAction>
                     </ListItem>
                   </List>
@@ -506,8 +498,28 @@ const MainViewContent = () => {
                         </TableRow>
                         <TableRow>
                           <TableCell component="th">
+                            <LayersIcon className={ classes.debugTableIcon } fontSize="small"/>
+                            Overlap (All)
+                          </TableCell>
+                          <TableCell align="center" colSpan={ 2 }
+                                     style={ { color: (elemPathAll === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                            { elemPathAll }
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell component="th">
+                            <LayersIcon className={ classes.debugTableIcon } fontSize="small"/>
+                            Overlap (Filtered)
+                          </TableCell>
+                          <TableCell align="center" colSpan={ 2 }
+                                     style={ { color: (elemPath === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                            { elemPath }
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell component="th">
                             <SearchIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Target or not
+                            Filtered target or not
                           </TableCell>
                           <TableCell align="center"
                                      style={ { color: (domIsTarget === "not" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
@@ -572,26 +584,6 @@ const MainViewContent = () => {
                           <TableCell align="center"
                                      style={ { color: (parentDomAriaLabel === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
                             { parentDomAriaLabel }
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell component="th">
-                            <LayersIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Layers (Filtered)
-                          </TableCell>
-                          <TableCell align="center" colSpan={ 2 }
-                                     style={ { color: (elemPath === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { elemPath }
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell component="th">
-                            <LayersIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Layers (All)
-                          </TableCell>
-                          <TableCell align="center" colSpan={ 2 }
-                                     style={ { color: (elemPathAll === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { elemPathAll }
                           </TableCell>
                         </TableRow>
                       </TableBody>
