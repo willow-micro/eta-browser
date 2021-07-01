@@ -61,7 +61,7 @@ const WebView = React.forwardRef((props, ref) => {
 // Main Component
 const MainView = () => {
 
-    // Create capturer with ( Bit rate, Target window, Blob chunk reveive channel )
+    // Create capturer
     const capturer = new Capturer(2000000, 1000);   // bit rate [bps], data retrieve timeslice [ms]
     capturer.on("start", () => {
         window.viewerIPCSend("AppMessage", {
