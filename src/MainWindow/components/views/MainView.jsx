@@ -10,6 +10,8 @@ import { Dialog, Slide } from '@material-ui/core';
 import { IconButton, ButtonGroup, Button, TextField } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
 import TuneIcon from '@material-ui/icons/Tune';
+import CancelIcon from '@material-ui/icons/Cancel';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import WebIcon from '@material-ui/icons/Web';
 import DescriptionIcon from '@material-ui/icons/Description';
 import TheatersIcon from '@material-ui/icons/Theaters';
@@ -27,32 +29,40 @@ import { SnackbarProvider, useSnackbar } from 'notistack';
 // User
 import { CustomColorPalette, CustomTheme, useStyles } from './MainViewStyles';
 
+// Transition for opening the configs dialog
+const ConfigsDialogTransition = React.forwardRef((props, ref) => {
+    return <Slide direction="up" ref={ ref } { ...props } />;
+});
 
 // Main Component
 const MainViewContent = () => {
-    // useState
+    // React Hooks State
+    // Configs Dialog
+    const [isConfigsDialogOpen, setIsConfigsDialogOpen] = useState(false);
+    // Button group
     const [buttonState, setButtonState] = useState(0);
     const [doesViewerWindowExists, setDoesViewerWindowExists] = useState(false);
-
+    // App Message
     const [appMessage, setAppMessage] = useState("起動しました");
     const [appMessageType, setAppMessageType] = useState("success");
+    // Viewer Destination URL
     const [browserURL, setBrowserURL] = useState("file:///Users/kawa/Wakayama/2021/HCDLab/sample/eta-sample-menu/build/index.html");
     const [isBrowserURLValid, setIsBrowserURLValid] = useState(true);
     // CSV Destination Path
     const [csvDestinationPath, setCsvDestinationPath] = useState("");
     // Capture Destination Path
     const [captureDestinationPath, setCaptureDestinationPath] = useState("");
-
-    // Coordinates
+    // DOM Data
+    //// Coordinates
     const [domCoordinateX, setDomCoordinateX] = useState(0);
     const [domCoordinateY, setDomCoordinateY] = useState(0);
-    // Main Target Element
+    //// Main Target Element
     const [domIsTarget, setDomIsTarget] = useState("not");
     const [domTagName, setDomTagName] = useState("<none>");
     const [domId, setDomId] = useState("<none>");
     const [domRole, setDomRole] = useState("<none>");
     const [domAriaLabel, setDomAriaLabel] = useState("<none>");
-    // Parent Target Element
+    //// Parent Target Element
     const [parentDomIsTarget, setParentDomIsTarget] = useState("not");
     const [parentDomCoordinateX, setParentDomCoordinateX] = useState(0);
     const [parentDomCoordinateY, setParentDomCoordinateY] = useState(0);
@@ -60,9 +70,9 @@ const MainViewContent = () => {
     const [parentDomId, setParentDomId] = useState("<none>");
     const [parentDomRole, setParentDomRole] = useState("<none>");
     const [parentDomAriaLabel, setParentDomAriaLabel] = useState("<none>");
-    // Element Path (Filtered)
+    //// Element Path (Filtered)
     const [elemPath, setElemPath] = useState("<none>");
-    // Element Path (All)
+    //// Element Path (All)
     const [elemPathAll, setElemPathAll] = useState("<none>");
 
 
@@ -128,6 +138,7 @@ const MainViewContent = () => {
     };
 
     // useEffect
+    //// IPC Effects
     useEffect(() => {
         // IPC Receive (from Main) Create Listener
         window.api.on("AppMessage", onAppMessage);
@@ -145,7 +156,7 @@ const MainViewContent = () => {
             window.api.remove("ViewerClosed", onViewerClosed);
         };
     }, []);
-
+    //// Button group Effects
     useEffect(() => {
         // No active button
         if (buttonState === 0) {
@@ -180,10 +191,19 @@ const MainViewContent = () => {
 
 
     // onClicks
-    const onSelectCsvDestinationPath = () => {
+    const onOpenConfigsDialogButton = () => {
+        setIsConfigsDialogOpen(true);
+    };
+    const onCancelConfigsDialogButton = () => {
+        setIsConfigsDialogOpen(false);
+    };
+    const onSaveConfigsDialogButton = () => {
+        setIsConfigsDialogOpen(false);
+    };
+    const onSelectCsvDestinationPathButton = () => {
         window.api.send("RequestCsvDestinationPath", {});
     };
-    const onSelectCaptureDestinationPath = () => {
+    const onSelectCaptureDestinationPathButton = () => {
         window.api.send("RequestCaptureDestinationPath", {});
     };
 
@@ -244,7 +264,8 @@ const MainViewContent = () => {
                 コンソール
               </Typography>
               <Tooltip title="分析条件の変更">
-                <IconButton color="inherit" aria-label="分析条件の変更">
+                <IconButton color="inherit" aria-label="分析条件の変更"
+                            onClick={ onOpenConfigsDialogButton }>
                   <TuneIcon />
                 </IconButton>
               </Tooltip>
@@ -289,7 +310,7 @@ const MainViewContent = () => {
                       <ListItemText primary="CSVファイルの保存先" secondary={ csvDestinationPath } />
                       <ListItemSecondaryAction>
                         <Button variant="contained" color="primary" endIcon={ <OpenInNewIcon /> }
-                                onClick={ onSelectCsvDestinationPath }>
+                                onClick={ onSelectCsvDestinationPathButton }>
                           参照
                         </Button>
                       </ListItemSecondaryAction>
@@ -301,7 +322,7 @@ const MainViewContent = () => {
                       <ListItemText primary="キャプチャの保存先" secondary={ captureDestinationPath } />
                       <ListItemSecondaryAction>
                         <Button variant="contained" color="primary" endIcon={ <OpenInNewIcon /> }
-                                onClick={ onSelectCaptureDestinationPath }>
+                                onClick={ onSelectCaptureDestinationPathButton }>
                           参照
                         </Button>
                       </ListItemSecondaryAction>
@@ -325,7 +346,7 @@ const MainViewContent = () => {
                 <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
                                   aria-controls="debug-table-panel-content"
                                   id="debug-table-panel-header">
-                  <Typography className={ classes.debugTableHeading } component="h2">注視要素</Typography>
+                  <Typography className={ classes.heading } component="h2">注視要素</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   <TableContainer>
@@ -443,6 +464,56 @@ const MainViewContent = () => {
               </Accordion>
             </Grid>
           </Grid>
+          { /* Configs Dialog */ }
+          <Dialog fullScreen open={ isConfigsDialogOpen } onClose={ onCancelConfigsDialogButton }
+                  TransitionComponent={ ConfigsDialogTransition }>
+            <AppBar className={ classes.appBar } elevation={ 2 } position="sticky">
+              <Toolbar className={ classes.toolBar } variant="dense"
+                       component="nav" role="navigation" aria-label="分析条件変更画面のメニューバー">
+                <Typography className={ classes.toolBarTitle } variant="h6" component="h1" color="inherit">
+                  分析条件の変更
+                </Typography>
+                <Button className={ classes.dialogToolBarButton } variant="contained" color="secondary" size="small" disableElevation
+                        onClick={ onSaveConfigsDialogButton }
+                        startIcon={ <CheckCircleIcon /> }>
+                  保存
+                </Button>
+                <Button className={ classes.dialogToolBarButton } variant="contained" color="default" size="small" disableElevation
+                        onClick={ onCancelConfigsDialogButton }
+                        startIcon={ <CancelIcon /> }>
+                  キャンセル
+                </Button>
+              </Toolbar>
+            </AppBar>
+            <div className={ classes.dialogContent }>
+              <Grid container spacing={ 3 }>
+                <Grid item xs={ 12 }>
+                  <Accordion defaultExpanded={ true }>
+                    <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
+                                      aria-controls="configs-panel-1-content"
+                                      id="configs-panel-1-header">
+                      <Typography className={ classes.heading } component="h2">収集する要素</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+
+                    </AccordionDetails>
+                  </Accordion>
+                </Grid>
+                <Grid item xs={ 12 }>
+                  <Accordion defaultExpanded={ true }>
+                    <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
+                                      aria-controls="configs-panel-2-content"
+                                      id="configs-panel-2-header">
+                      <Typography className={ classes.heading } component="h2">収集する要素の情報</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+
+                    </AccordionDetails>
+                  </Accordion>
+                </Grid>
+              </Grid>
+            </div>
+          </Dialog>
         </div>
     );
 };
