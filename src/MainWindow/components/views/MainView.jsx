@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 //// Material-UI
 import { ThemeProvider } from '@material-ui/core/styles';
 import { AppBar, Toolbar, Grid, Paper, Typography, Tooltip } from '@material-ui/core';
-import { Dialog, Slide } from '@material-ui/core';
 import { List, ListItem, ListItemIcon, ListItemText, ListItemSecondaryAction, Divider } from '@material-ui/core';
 import { Accordion, AccordionSummary, AccordionDetails, AccordionActions } from '@material-ui/core';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@material-ui/core';
@@ -27,18 +26,12 @@ import { SnackbarProvider, useSnackbar } from 'notistack';
 // User
 import { CustomColorPalette, CustomTheme, useStyles } from './MainViewStyles';
 import ConfigsView from './ConfigsView.jsx';
+import { ConfigsProvider, useConfigsContext } from '../../contexts/ConfigsContext.jsx';
 
-
-// Transition for opening the configs dialog
-const ConfigsDialogTransition = React.forwardRef((props, ref) => {
-    return <Slide direction="up" ref={ ref } { ...props } />;
-});
 
 // Main Component
 const MainViewContent = () => {
     // React Hooks State
-    // Configs
-
     // Configs Dialog
     const [isConfigsDialogOpen, setIsConfigsDialogOpen] = useState(false);
     // Button group
@@ -76,6 +69,11 @@ const MainViewContent = () => {
     const [elemPath, setElemPath] = useState("<none>");
     //// Element Path (All)
     const [elemPathAll, setElemPathAll] = useState("<none>");
+
+
+    // React Hooks Context
+    // Configs
+    const { configs, setConfigs } = useConfigsContext();
 
 
     // IPC Receive Callbacks
@@ -194,12 +192,10 @@ const MainViewContent = () => {
 
     // React Event onClicks
     const onOpenConfigsDialogButton = () => {
+        console.log(configs);
         setIsConfigsDialogOpen(true);
     };
-    const onCancelConfigsDialogButton = () => {
-        setIsConfigsDialogOpen(false);
-    };
-    const onSaveConfigsDialogButton = () => {
+    const onCloseConfigsDialogButton = () => {
         setIsConfigsDialogOpen(false);
     };
     const onSelectCsvDestinationPathButton = () => {
@@ -212,7 +208,8 @@ const MainViewContent = () => {
         if (isBrowserURLValid && browserURL.length > 0) {
             console.log("OpenViewerButton");
             window.api.send("OpenViewer", {
-                url: browserURL
+                url: browserURL,
+                configs: configs
             });
             setButtonState(2);
             setDoesViewerWindowExists(true);
@@ -466,21 +463,20 @@ const MainViewContent = () => {
             </Grid>
           </Grid>
           { /* Configs Dialog */ }
-          <Dialog fullScreen open={ isConfigsDialogOpen } onClose={ onCancelConfigsDialogButton }
-                  TransitionComponent={ ConfigsDialogTransition }>
-            <ConfigsView saveHandler={ onSaveConfigsDialogButton } cancelHandler={ onCancelConfigsDialogButton } />
-          </Dialog>
+          <ConfigsView open={ isConfigsDialogOpen } onClose={ onCloseConfigsDialogButton } />
         </div>
     );
 };
 
 const MainView = () => {
     return (
-        <ThemeProvider theme={ CustomTheme }>
-          <SnackbarProvider maxSnack={ 3 }>
-            <MainViewContent />
-          </SnackbarProvider>
-        </ThemeProvider>
+        <ConfigsProvider>
+          <ThemeProvider theme={ CustomTheme }>
+            <SnackbarProvider maxSnack={ 3 }>
+              <MainViewContent />
+            </SnackbarProvider>
+          </ThemeProvider>
+        </ConfigsProvider>
     );
 }
 
