@@ -24,19 +24,49 @@ const ConfigsDialogTransition = React.forwardRef((props, ref) => {
 // Main Component
 const ConfigsView = (props) => {
     // React Hooks State
+    // open
     const [ isDialogOpen, setIsDialogOpen ] = useState(false);
-
+    // Configs (local state)
+    const [ filterTagNames, setFilterTagNames ] = useState(null);
+    const [ filterAttributes, setFilterAttributes ] = useState(null);
+    const [ adoptRange, setAdoptRange ] = useState(null);
+    const [ generalDataCollection, setGeneralDataCollection ] = useState(null);
+    const [ elementDataCollection, setElementDataCollection ] = useState(null);
 
     // React Hooks Context
-    // Configs
+    // Configs (global context)
     const { configs, setConfigs } = useConfigsContext();
 
 
     // React Hooks Effect
+    // "open" property Effect
     useEffect(() => {
         setIsDialogOpen(props.open);
+        if (props.open) {
+            const filterTagNamesForChips = [];
+            for (let i = 0; i < configs.filterTagNames.length; i++) {
+                filterTagNamesForChips.push({ key: i, label: configs.filterTagNames[i] });
+            }
+            setFilterTagNames(filterTagNamesForChips);
+            const filterAttributesForChips = [];
+            for (let i = 0; i < configs.filterAttributes.length; i++) {
+                filterAttributesForChips.push({ key: i, label: configs.filterAttributes[i] });
+            }
+            setFilterAttributes(filterAttributesForChips);
+            setAdoptRange(configs.adoptRange);
+            setGeneralDataCollection(configs.generalDataCollection);
+            setElementDataCollection(configs.elementDataCollection);
+        }
     }, [props.open]);
 
+
+    // React Event onDeletes
+    const onDeleteFilterTagNamesChip = (chipToDelete) => () => {
+        setFilterTagNames((chips) => chips.filter((chip) => chip.key !== chipToDelete.key));
+    };
+    const onDeleteFilterAttributesChip = (chipToDelete) => () => {
+        setFilterAttributes((chips) => chips.filter((chip) => chip.key !== chipToDelete.key));
+    };
 
     // React Event onClicks
     const onSaveConfigs = () => {
@@ -103,7 +133,33 @@ const ConfigsView = (props) => {
                           <Typography className={ classes.subheading } component="h3">以下の名前を持つ要素</Typography>
                         </Grid>
                         <Grid item xs={ 12 }>
+                          <ul className={ classes.chipsContainer }>
+                            { filterTagNames && filterTagNames.map((data) => {
+                                  return (
+                                      <li key={ data.key }>
+                                        <Chip className={ classes.chip } color="secondary" size="small"
+                                              label={ data.label }
+                                              onDelete={ onDeleteFilterTagNamesChip(data) } />
+                                      </li>
+                                  );
+                            }) }
+                          </ul>
+                        </Grid>
+                        <Grid item xs={ 12 }>
                           <Typography className={ classes.subheading } component="h3">以下の属性を持つ要素</Typography>
+                        </Grid>
+                        <Grid item xs={ 12 }>
+                          <ul className={ classes.chipsContainer }>
+                            { filterAttributes && filterAttributes.map((data) => {
+                                  return (
+                                      <li key={ data.key }>
+                                        <Chip className={ classes.chip } color="secondary" size="small"
+                                              label={ data.label }
+                                              onDelete={ onDeleteFilterAttributesChip(data) } />
+                                      </li>
+                                  );
+                            }) }
+                          </ul>
                         </Grid>
                         <Grid item xs={ 12 }>
                           <Typography className={ classes.subheading } component="h3">収集する要素の階層</Typography>

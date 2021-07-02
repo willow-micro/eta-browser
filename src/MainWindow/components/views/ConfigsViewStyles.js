@@ -83,8 +83,10 @@ const useStyles = makeStyles((theme) => ({
         justifyContent: 'flex-start',
         flexWrap: 'wrap',
         listStyle: 'none',
-        padding: theme.spacing(0.5),
-        margin: 0
+        marginTop: theme.spacing( 2 ),
+        marginRight: theme.spacing( 4 ),
+        marginBottom: theme.spacing( 2 ),
+        marginLeft: theme.spacing( 4 )
     },
     // Chip
     chip: {
