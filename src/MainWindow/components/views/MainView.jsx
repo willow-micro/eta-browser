@@ -3,15 +3,13 @@ import React, { useState, useEffect } from 'react';
 //// Material-UI
 import { ThemeProvider } from '@material-ui/core/styles';
 import { AppBar, Toolbar, Grid, Paper, Typography, Tooltip } from '@material-ui/core';
+import { Dialog, Slide } from '@material-ui/core';
 import { List, ListItem, ListItemIcon, ListItemText, ListItemSecondaryAction, Divider } from '@material-ui/core';
 import { Accordion, AccordionSummary, AccordionDetails, AccordionActions } from '@material-ui/core';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@material-ui/core';
-import { Dialog, Slide } from '@material-ui/core';
 import { IconButton, ButtonGroup, Button, TextField } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
 import TuneIcon from '@material-ui/icons/Tune';
-import CancelIcon from '@material-ui/icons/Cancel';
-import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import WebIcon from '@material-ui/icons/Web';
 import DescriptionIcon from '@material-ui/icons/Description';
 import TheatersIcon from '@material-ui/icons/Theaters';
@@ -28,6 +26,8 @@ import { SnackbarProvider, useSnackbar } from 'notistack';
 
 // User
 import { CustomColorPalette, CustomTheme, useStyles } from './MainViewStyles';
+import ConfigsView from './ConfigsView.jsx';
+
 
 // Transition for opening the configs dialog
 const ConfigsDialogTransition = React.forwardRef((props, ref) => {
@@ -37,6 +37,8 @@ const ConfigsDialogTransition = React.forwardRef((props, ref) => {
 // Main Component
 const MainViewContent = () => {
     // React Hooks State
+    // Configs
+
     // Configs Dialog
     const [isConfigsDialogOpen, setIsConfigsDialogOpen] = useState(false);
     // Button group
@@ -137,7 +139,7 @@ const MainViewContent = () => {
         setElemPathAll("<none>");
     };
 
-    // useEffect
+    // React Hooks useEffect
     //// IPC Effects
     useEffect(() => {
         // IPC Receive (from Main) Create Listener
@@ -186,11 +188,11 @@ const MainViewContent = () => {
         }
     }, [csvDestinationPath, captureDestinationPath, buttonState, doesViewerWindowExists]);
 
-    // useSnackbar (notistack)
+    // Notistack useSnackbar
     const { enqueueSnackbar } = useSnackbar();
 
 
-    // onClicks
+    // React Event onClicks
     const onOpenConfigsDialogButton = () => {
         setIsConfigsDialogOpen(true);
     };
@@ -206,7 +208,6 @@ const MainViewContent = () => {
     const onSelectCaptureDestinationPathButton = () => {
         window.api.send("RequestCaptureDestinationPath", {});
     };
-
     const onOpenViewerButton = () => {
         if (isBrowserURLValid && browserURL.length > 0) {
             console.log("OpenViewerButton");
@@ -237,7 +238,7 @@ const MainViewContent = () => {
     };
 
 
-    // onChanges
+    // React Event onChanges
     const onBrowserURLChange = (event) => {
         setBrowserURL(event.target.value);
         // Check if the given url is valid
@@ -467,52 +468,7 @@ const MainViewContent = () => {
           { /* Configs Dialog */ }
           <Dialog fullScreen open={ isConfigsDialogOpen } onClose={ onCancelConfigsDialogButton }
                   TransitionComponent={ ConfigsDialogTransition }>
-            <AppBar className={ classes.appBar } elevation={ 2 } position="sticky">
-              <Toolbar className={ classes.toolBar } variant="dense"
-                       component="nav" role="navigation" aria-label="分析条件変更画面のメニューバー">
-                <Typography className={ classes.toolBarTitle } variant="h6" component="h1" color="inherit">
-                  分析条件の変更
-                </Typography>
-                <Button className={ classes.dialogToolBarButton } variant="contained" color="secondary" size="small" disableElevation
-                        onClick={ onSaveConfigsDialogButton }
-                        startIcon={ <CheckCircleIcon /> }>
-                  保存
-                </Button>
-                <Button className={ classes.dialogToolBarButton } variant="contained" color="default" size="small" disableElevation
-                        onClick={ onCancelConfigsDialogButton }
-                        startIcon={ <CancelIcon /> }>
-                  キャンセル
-                </Button>
-              </Toolbar>
-            </AppBar>
-            <div className={ classes.dialogContent }>
-              <Grid container spacing={ 3 }>
-                <Grid item xs={ 12 }>
-                  <Accordion defaultExpanded={ true }>
-                    <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
-                                      aria-controls="configs-panel-1-content"
-                                      id="configs-panel-1-header">
-                      <Typography className={ classes.heading } component="h2">収集する要素</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-
-                    </AccordionDetails>
-                  </Accordion>
-                </Grid>
-                <Grid item xs={ 12 }>
-                  <Accordion defaultExpanded={ true }>
-                    <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
-                                      aria-controls="configs-panel-2-content"
-                                      id="configs-panel-2-header">
-                      <Typography className={ classes.heading } component="h2">収集する要素の情報</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-
-                    </AccordionDetails>
-                  </Accordion>
-                </Grid>
-              </Grid>
-            </div>
+            <ConfigsView saveHandler={ onSaveConfigsDialogButton } cancelHandler={ onCancelConfigsDialogButton } />
           </Dialog>
         </div>
     );

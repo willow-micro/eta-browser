@@ -1,6 +1,6 @@
 // System
 //// Material-UI
-import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import { createMuiTheme } from '@material-ui/core/styles';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import { grey, blueGrey, brown } from '@material-ui/core/colors';
 
@@ -86,6 +86,11 @@ const useStyles = makeStyles((theme) => ({
     label: {
         userSelect: 'none'
     },
+    // Paper
+    paper: {
+        padding: theme.spacing( 2 ),
+        color: CustomColorPalette.Black,
+    },
     // AppBar
     appBar: {
         backgroundColor: CustomColorPalette.Primary,
@@ -102,28 +107,12 @@ const useStyles = makeStyles((theme) => ({
         marginLeft: theme.spacing( 2 ),
         userSelect: 'none'
     },
-    // Dialog ToolBar Buttons
-    dialogToolBarButton: {
-        marginRight: theme.spacing( 2 )
-    },
-    // Dialog Content
-    dialogContent: {
-        marginTop: theme.spacing( 4 ),
-        marginRight: theme.spacing( 4 ),
-        marginBottom: theme.spacing( 4 ),
-        marginLeft: theme.spacing( 4 )
-    },
-    // Paper
-    paper: {
-        padding: theme.spacing( 2 ),
-        color: CustomColorPalette.Black,
-    },
     // Heading
-    heading: {
-        fontSize: theme.typography.pxToRem(15),
+    subheading: {
+        fontSize: theme.typography.pxToRem(13),
         fontWeight: theme.typography.fontWeightRegular,
         color: CustomColorPalette.Black,
-        marginLeft: theme.spacing( 3 )
+        marginLeft: theme.spacing( 4 )
     },
     // Setup Accordion Details
     setupAccordionDetails: {
