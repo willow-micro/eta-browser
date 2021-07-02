@@ -1,15 +1,14 @@
 // System
 import React, { useState, useEffect } from 'react';
 //// Material-UI
-import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
-import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
+import { ThemeProvider } from '@material-ui/core/styles';
 import { AppBar, Toolbar, Grid, Paper, Typography, Tooltip } from '@material-ui/core';
 import { List, ListItem, ListItemIcon, ListItemText, ListItemSecondaryAction, Divider } from '@material-ui/core';
 import { Accordion, AccordionSummary, AccordionDetails, AccordionActions } from '@material-ui/core';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@material-ui/core';
+import { Dialog, Slide } from '@material-ui/core';
 import { IconButton, ButtonGroup, Button, TextField } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
-import { grey, blueGrey, brown } from '@material-ui/core/colors';
 import TuneIcon from '@material-ui/icons/Tune';
 import WebIcon from '@material-ui/icons/Web';
 import DescriptionIcon from '@material-ui/icons/Description';
@@ -22,167 +21,11 @@ import CropFreeIcon from '@material-ui/icons/CropFree';
 import LocationSearchingIcon from '@material-ui/icons/LocationSearching';
 import LayersIcon from '@material-ui/icons/Layers'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-
+////// Notistack
 import { SnackbarProvider, useSnackbar } from 'notistack';
 
-
 // User
-
-// Colors
-// Material Design Color Tool: https://material.io/resources/color/#!/?view.left=0&view.right=0&primary.color=455A64&secondary.color=8D6E63&primary.text.color=FAFAFA&secondary.text.color=FAFAFA
-const SystemColor = {
-    Primary: blueGrey[700],
-    Secondary: brown[400],
-    PrimaryText: grey[50],
-    SecondaryText: grey[50],
-    White: grey[50],
-    Black: grey[900],
-    LightGrey: grey[100],
-    DarkGrey: grey[300],
-    ExtraDarkGrey: grey[500]
-};
-
-// Material-UI Custom Theme Application
-// Default values: https://material-ui.com/customization/default-theme/
-const customTheme = createMuiTheme( {
-    // Spacingの設定
-    spacing: 8,                 // デフォルト値: 8px
-    // カラースキームの設定
-    palette: {
-        // プライマリ
-        primary: {
-            main: SystemColor.Primary,
-            contrastText: SystemColor.PrimaryText,
-        },
-        // セカンダリ
-        secondary: {
-            main: SystemColor.Secondary,
-            contrastText: SystemColor.SecondaryText,
-        },
-    },
-    // フォントの設定
-    typography: {
-        // すべてのフォントファミリーの変更
-        fontFamily: [
-            'Roboto',
-            'Noto Sans JP',
-            'sans-serif',
-        ].join( ',' ),
-        // フォントサイズの変更
-        // htmlFontSizeを変更すると, rem (root em)で指定したフォントサイズが影響を受ける．
-        // よってTypographyの各variantのフォントサイズも変化してしまうため，これは変更していない
-        htmlFontSize: 16,       // デフォルト値: 16px
-    },
-    // Material-UIのコンポーネントのデフォルトスタイルの上書き
-    overrides: {
-        // Typography
-        typography: {
-            color: 'inherit',
-            variantMapping: {
-                h1: 'h2',
-                h2: 'h2',
-                h3: 'h2',
-                h4: 'h2',
-                h5: 'h2',
-                h6: 'h2',
-                subtitle1: 'h2',
-                subtitle2: 'h2',
-                body1: 'span',
-                body2: 'span',
-            },
-        },
-        // TextField
-        MuiTextField: {
-            root: {
-                // InputPropsにminおよびmaxを指定した際，その値に応じて親要素より小さくなってしまう現象を防ぐ
-                width: '100%'
-            }
-        }
-    }
-} );
-
-// Customise Styles
-const useStyles = makeStyles((theme) => ({
-    // Root
-    root: {
-        flexGrow: 1
-    },
-    // Label
-    label: {
-        userSelect: 'none'
-    },
-    // AppBar
-    appBar: {
-        backgroundColor: SystemColor.Primary,
-        color: SystemColor.PrimaryText
-    },
-    // ToolBar (inside AppBar) Has Button, etc.
-    toolBar: {
-        flexWrap: 'nowrap',
-        alignItems: 'center'
-    },
-    // ToolBar Title
-    toolBarTitle: {
-        flexGrow: 1,
-        marginLeft: theme.spacing( 2 ),
-        userSelect: 'none'
-    },
-    // Paper
-    paper: {
-        padding: theme.spacing( 2 ),
-        color: SystemColor.Black,
-    },
-    // Heading
-    heading: {
-        fontSize: theme.typography.pxToRem(15),
-        fontWeight: theme.typography.fontWeightRegular,
-        color: SystemColor.Black,
-        marginLeft: theme.spacing( 3 )
-    },
-    // Setup Accordion Details
-    setupAccordionDetails: {
-        display: 'block',
-        paddingTop: theme.spacing( 0 ),
-        paddingRight: theme.spacing( 2 ),
-        paddingBottom: theme.spacing( 0 ),
-        paddingLeft: theme.spacing( 2 )
-    },
-    // Setup Accordion Actions
-    setupAccordionActions: {
-        display: 'flex',
-        justifyContent: 'center',
-        padding: theme.spacing( 2 )
-    },
-    // Text fields
-    textfield: {
-        width: '50vw'
-    },
-    // Destination Path Selector Container
-    pathSelector: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    },
-    // Destination Path
-    destinationPath: {
-        marginRight: theme.spacing( 2 ),
-        color: SystemColor.Black,
-        textAlign: 'right'
-    },
-    // Debug Table Heading
-    debugTableHeading: {
-        fontSize: theme.typography.pxToRem(15),
-        fontWeight: theme.typography.fontWeightRegular,
-        color: SystemColor.Black,
-        marginLeft: theme.spacing( 3 )
-    },
-    // Debug Table: Icon Margin
-    debugTableIcon: {
-        marginRight: theme.spacing( 3 ),
-        marginLeft: theme.spacing( 3 ),
-        verticalAlign: 'sub'
-    }
-}));
+import { CustomColorPalette, CustomTheme, useStyles } from './MainViewStyles';
 
 
 // Main Component
@@ -324,7 +167,7 @@ const MainViewContent = () => {
                 }
             }
         } else if (buttonState === 1) {
-            // "OpenBrowser" button is active
+            // "OpenViewer" button is active
             if (doesViewerWindowExists) {
                 // There is an opened browser
                 setButtonState(0);
@@ -344,10 +187,10 @@ const MainViewContent = () => {
         window.api.send("RequestCaptureDestinationPath", {});
     };
 
-    const onOpenBrowserButton = () => {
+    const onOpenViewerButton = () => {
         if (isBrowserURLValid && browserURL.length > 0) {
-            console.log("OpenBrowserButton");
-            window.api.send("OpenBrowser", {
+            console.log("OpenViewerButton");
+            window.api.send("OpenViewer", {
                 url: browserURL
             });
             setButtonState(2);
@@ -467,7 +310,7 @@ const MainViewContent = () => {
                 </AccordionDetails>
                 <AccordionActions className={ classes.setupAccordionActions }>
                   <ButtonGroup variant="contained" color="primary">
-                    <Button onClick={ onOpenBrowserButton }
+                    <Button onClick={ onOpenViewerButton }
                             disabled={ buttonState === 1 ? false : true }>ブラウザを開く</Button>
                     <Button onClick={ onStartButton }
                             disabled={ buttonState === 2 ? false : true }>計測開始</Button>
@@ -509,7 +352,7 @@ const MainViewContent = () => {
                             Overlap (All)
                           </TableCell>
                           <TableCell align="center" colSpan={ 2 }
-                                     style={ { color: (elemPathAll === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (elemPathAll === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { elemPathAll }
                           </TableCell>
                         </TableRow>
@@ -519,7 +362,7 @@ const MainViewContent = () => {
                             Overlap (Filtered)
                           </TableCell>
                           <TableCell align="center" colSpan={ 2 }
-                                     style={ { color: (elemPath === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (elemPath === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { elemPath }
                           </TableCell>
                         </TableRow>
@@ -529,11 +372,11 @@ const MainViewContent = () => {
                             Filtered target or not
                           </TableCell>
                           <TableCell align="center"
-                                     style={ { color: (domIsTarget === "not" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (domIsTarget === "not" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { domIsTarget }
                           </TableCell>
                           <TableCell align="center"
-                                     style={ { color: (parentDomIsTarget === "not" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (parentDomIsTarget === "not" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { parentDomIsTarget }
                           </TableCell>
                         </TableRow>
@@ -543,11 +386,11 @@ const MainViewContent = () => {
                             Tag
                           </TableCell>
                           <TableCell align="center"
-                                     style={ { color: (domTagName === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (domTagName === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { domTagName }
                           </TableCell>
                           <TableCell align="center"
-                                     style={ { color: (parentDomTagName === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (parentDomTagName === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { parentDomTagName }
                           </TableCell>
                         </TableRow>
@@ -557,11 +400,11 @@ const MainViewContent = () => {
                             Role
                           </TableCell>
                           <TableCell align="center"
-                                     style={ { color: (domRole === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (domRole === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { domRole }
                           </TableCell>
                           <TableCell align="center"
-                                     style={ { color: (parentDomRole === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (parentDomRole === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { parentDomRole }
                           </TableCell>
                         </TableRow>
@@ -571,11 +414,11 @@ const MainViewContent = () => {
                             ID
                           </TableCell>
                           <TableCell align="center"
-                                     style={ { color: (domId === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (domId === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { domId }
                           </TableCell>
                           <TableCell align="center"
-                                     style={ { color: (parentDomId === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (parentDomId === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { parentDomId }
                           </TableCell>
                         </TableRow>
@@ -585,11 +428,11 @@ const MainViewContent = () => {
                             Label
                           </TableCell>
                           <TableCell align="center"
-                                     style={ { color: (domAriaLabel === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (domAriaLabel === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { domAriaLabel }
                           </TableCell>
                           <TableCell align="center"
-                                     style={ { color: (parentDomAriaLabel === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (parentDomAriaLabel === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { parentDomAriaLabel }
                           </TableCell>
                         </TableRow>
@@ -606,7 +449,7 @@ const MainViewContent = () => {
 
 const MainView = () => {
     return (
-        <ThemeProvider theme={ customTheme }>
+        <ThemeProvider theme={ CustomTheme }>
           <SnackbarProvider maxSnack={ 3 }>
             <MainViewContent />
           </SnackbarProvider>

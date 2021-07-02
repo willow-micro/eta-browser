@@ -90,7 +90,7 @@ app.on('activate', () => {
 // code. You can also put them in separate files and import them here.
 
 // IPC Message Rx (from Renderer)
-ipcMain.on("OpenBrowser", (event, arg) => {
+ipcMain.on("OpenViewer", (event, arg) => {
     // Get URL
     let viewerDestinationURL = arg.url;
 
