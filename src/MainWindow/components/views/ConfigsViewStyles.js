@@ -92,10 +92,10 @@ const useStyles = makeStyles((theme) => ({
     },
     // Chip
     chip: {
-        marginTop: theme.spacing(1),
-        marginRight: theme.spacing(1),
-        marginBottom: theme.spacing(0),
-        marginLeft: theme.spacing(0)
+        marginTop: theme.spacing( 1 ),
+        marginRight: theme.spacing( 1 ),
+        marginBottom: theme.spacing( 0 ),
+        marginLeft: theme.spacing( 0 )
     },
     // Add Chip Controls Container
     newChipContainer: {
@@ -115,6 +115,24 @@ const useStyles = makeStyles((theme) => ({
     // Add Chip Button
     newChipButton: {
         marginLeft: theme.spacing( 2 )
+    },
+    // Slider Container
+    sliderContainer: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'none',
+        marginTop: theme.spacing( 6 ),
+        marginRight: theme.spacing( 6 ),
+        marginBottom: theme.spacing( 4 ),
+        marginLeft: theme.spacing( 6 )
+    },
+    // Slider
+    slider: {
+        marginTop: theme.spacing( 0 ),
+        marginRight: theme.spacing( 4 ),
+        marginBottom: theme.spacing( 0 ),
+        marginLeft: theme.spacing( 4 )
     }
 }));
 

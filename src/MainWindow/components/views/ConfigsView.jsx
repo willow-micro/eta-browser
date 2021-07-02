@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from '@material-ui/core/styles';
 import { AppBar, Toolbar, Grid, Typography, Tooltip } from '@material-ui/core';
 import { Dialog, Slide } from '@material-ui/core';
-import { Chip } from '@material-ui/core';
-import { Accordion, AccordionSummary, AccordionDetails, AccordionActions } from '@material-ui/core';
+import { Chip, Slider } from '@material-ui/core';
+import { Accordion, AccordionSummary, AccordionDetails, AccordionActions, Divider } from '@material-ui/core';
 import { Button, TextField } from '@material-ui/core';
 import CancelIcon from '@material-ui/icons/Cancel';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
@@ -20,6 +20,58 @@ import { ConfigsProvider, useConfigsContext } from '../../contexts/ConfigsContex
 const ConfigsDialogTransition = React.forwardRef((props, ref) => {
     return <Slide direction="up" ref={ ref } { ...props } />;
 });
+
+// Sliders
+const leafAdoptSliderMarks = [
+    {
+        value: 0,
+        label: "←子要素"
+    },
+    {
+        value: 1,
+        label: "1階層"
+    },
+    {
+        value: 2,
+        label: "2階層"
+    },
+    {
+        value: 3,
+        label: "3階層"
+    }
+];
+const rootAdoptSliderMarks = [
+    {
+        value: 0,
+        label: "-3階層"
+    },
+    {
+        value: 1,
+        label: "-2階層"
+    },
+    {
+        value: 2,
+        label: "-1階層"
+    },
+    {
+        value: 3,
+        label: "親要素→"
+    }
+];
+
+const getLeafAdoptSliderValueText = (value) => {
+    if (value <= 0) {
+        return "なし";
+    }
+    return `${value}`;
+};
+const getRootAdoptSliderValueText = (value) => {
+    if (value >= 3) {
+        return "なし";
+    }
+    return `-${3 - value}`;
+};
+
 
 // Main Component
 const ConfigsView = (props) => {
@@ -59,7 +111,8 @@ const ConfigsView = (props) => {
                 filterAttributesForChips.push({ key: i, label: configs.filterAttributes[i] });
             }
             setFilterAttributes(filterAttributesForChips);
-            setAdoptRange(configs.adoptRange);
+            const adoptRangeForSlider = [configs.adoptRange.leaf, configs.adoptRange.root];
+            setAdoptRange(adoptRangeForSlider);
             setGeneralDataCollection(configs.generalDataCollection);
             setElementDataCollection(configs.elementDataCollection);
         }
@@ -76,11 +129,11 @@ const ConfigsView = (props) => {
 
     // React Event onClicks
     const onSaveConfigs = () => {
-        let filterTagNamesArray = [];
+        const filterTagNamesArray = [];
         for (let i = 0; i < filterTagNames.length; i++) {
             filterTagNamesArray.push(filterTagNames[i].label);
         }
-        let filterAttributesArray = [];
+        const filterAttributesArray = [];
         for (let i = 0; i < filterAttributes.length; i++) {
             filterAttributesArray.push(filterAttributes[i].label);
         }
@@ -89,8 +142,8 @@ const ConfigsView = (props) => {
             filterTagNames: filterTagNamesArray,
             filterAttributes: filterAttributesArray,
             adoptRange: {
-                start: 1,
-                end: 1
+                leaf: adoptRange[0],
+                root: adoptRange[1]
             },
             generalDataCollection: {
                 coordinates: true,
@@ -105,12 +158,18 @@ const ConfigsView = (props) => {
         props.onClose();
     };
     const onAddNewFilterTagName = () => {
-        setFilterTagNames([...filterTagNames, { key: filterTagNames.length, label: newFilterTagName }]);
+        if (isNewFilterTagNameValid) {
+            setFilterTagNames([...filterTagNames, { key: filterTagNames.length, label: newFilterTagName }]);
+        }
         setNewFilterTagName("");
+        setIsNewFilterTagNameValid(true);
     };
     const onAddNewFilterAttributes = () => {
-        setFilterAttributes([...filterAttributes, { key: filterAttributes.length, label: newFilterAttributes }]);
+        if (isNewFilterAttributesValid) {
+            setFilterAttributes([...filterAttributes, { key: filterAttributes.length, label: newFilterAttributes }]);
+        }
         setNewFilterAttributes("");
+        setIsNewFilterAttributesValid(true);
     };
 
     // React Event onChanges
@@ -168,7 +227,12 @@ const ConfigsView = (props) => {
         }
         setIsNewFilterAttributesValid(true);
     };
-
+    const onLeafAdoptSliderChange = (event, newValue) => {
+        setAdoptRange([newValue, adoptRange[1]]);
+    };
+    const onRootAdoptSliderChange = (event, newValue) => {
+        setAdoptRange([adoptRange[0], 3 - newValue]);
+    };
 
     // JSX
     const classes = useStyles();
@@ -278,7 +342,23 @@ const ConfigsView = (props) => {
                           </div>
                         </Grid>
                         <Grid item xs={ 12 }>
-                          <Typography className={ classes.subheading } component="h3">収集する要素の階層</Typography>
+                          <Typography className={ classes.subheading } component="h3">このうち&nbsp;&nbsp;以下の階層にある要素をデータ収集の対象とする</Typography>
+                        </Grid>
+                        <Grid item xs={ 12 }>
+                          <div className={ classes.sliderContainer }>
+                            <Slider className={ classes.slider } track="normal"
+                                    value={ adoptRange ? adoptRange[0] : 0 } min={ 0 } max={ 3 }
+                                    onChange={ onLeafAdoptSliderChange }
+                                    marks={ leafAdoptSliderMarks } step={ 1 }
+                                    getAriaValueText={ getLeafAdoptSliderValueText } valueLabelFormat={ getLeafAdoptSliderValueText }
+                                    valueLabelDisplay="on" aria-labelledby="leaf-adopt-range-slider" />
+                            <Slider className={ classes.slider } track="inverted"
+                                    value={ adoptRange ? 3 - adoptRange[1] : 3 } min={ 0 } max={ 3 }
+                                    onChange={ onRootAdoptSliderChange }
+                                    marks={ rootAdoptSliderMarks } step={ 1 }
+                                    getAriaValueText={ getRootAdoptSliderValueText } valueLabelFormat={ getRootAdoptSliderValueText }
+                                    valueLabelDisplay="on" aria-labelledby="root-adopt-range-slider" />
+                          </div>
                         </Grid>
                       </Grid>
                     </AccordionDetails>

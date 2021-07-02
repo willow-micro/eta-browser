@@ -18,8 +18,8 @@ const ConfigsProvider = ({ children }) => {
         filterTagNames: ["address", "article", "aside", "footer", "header", "h1", "h2", "h3", "h4", "h5", "h6", "main", "nav", "section"],
         filterAttributes: ["role", "aria-label"],
         adoptRange: {
-            start: 2,
-            end: 2
+            leaf: 1,
+            root: 1
         },
         generalDataCollection: {
             coordinates: true,
