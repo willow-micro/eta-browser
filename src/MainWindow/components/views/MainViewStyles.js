@@ -108,11 +108,12 @@ const useStyles = makeStyles((theme) => ({
         userSelect: 'none'
     },
     // Heading
-    subheading: {
-        fontSize: theme.typography.pxToRem(13),
+    heading: {
+        fontSize: theme.typography.pxToRem(15),
         fontWeight: theme.typography.fontWeightRegular,
         color: CustomColorPalette.Black,
-        marginLeft: theme.spacing( 4 )
+        marginLeft: theme.spacing( 3 ),
+        userSelect: 'none'
     },
     // Setup Accordion Details
     setupAccordionDetails: {
@@ -130,7 +131,7 @@ const useStyles = makeStyles((theme) => ({
     },
     // Text fields
     textfield: {
-        width: '50vw'
+        width: '60vw'
     },
     // Destination Path Selector Container
     pathSelector: {

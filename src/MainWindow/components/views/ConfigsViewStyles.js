@@ -64,18 +64,20 @@ const useStyles = makeStyles((theme) => ({
         marginLeft: theme.spacing( 4 )
     },
     // Heading
-    subheading: {
-        fontSize: theme.typography.pxToRem(13),
-        fontWeight: theme.typography.fontWeightRegular,
-        color: CustomColorPalette.Black,
-        marginLeft: theme.spacing( 4 )
-    },
-    // Subheading
     heading: {
         fontSize: theme.typography.pxToRem(15),
         fontWeight: theme.typography.fontWeightRegular,
         color: CustomColorPalette.Black,
-        marginLeft: theme.spacing( 3 )
+        marginLeft: theme.spacing( 3 ),
+        userSelect: 'none'
+    },
+    // Subheading
+    subheading: {
+        fontSize: theme.typography.pxToRem(13),
+        fontWeight: theme.typography.fontWeightRegular,
+        color: CustomColorPalette.Black,
+        marginLeft: theme.spacing( 4 ),
+        userSelect: 'none'
     },
     // Chips Container
     chipsContainer: {
@@ -83,19 +85,37 @@ const useStyles = makeStyles((theme) => ({
         justifyContent: 'flex-start',
         flexWrap: 'wrap',
         listStyle: 'none',
-        marginTop: theme.spacing( 2 ),
+        marginTop: theme.spacing( 0 ),
         marginRight: theme.spacing( 4 ),
-        marginBottom: theme.spacing( 2 ),
+        marginBottom: theme.spacing( 0 ),
         marginLeft: theme.spacing( 4 )
     },
     // Chip
     chip: {
-        margin: theme.spacing(0.5)
+        marginTop: theme.spacing(1),
+        marginRight: theme.spacing(1),
+        marginBottom: theme.spacing(0),
+        marginLeft: theme.spacing(0)
     },
-    // Text fields
-    textfield: {
-        width: '50vw'
+    // Add Chip Controls Container
+    newChipContainer: {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        alignItems: 'baseline',
+        flexWrap: 'none',
+        marginTop: theme.spacing( 0 ),
+        marginRight: theme.spacing( 6 ),
+        marginBottom: theme.spacing( 0 ),
+        marginLeft: theme.spacing( 2 )
     },
+    // Add Chip text fields
+    newChipTextfield: {
+        width: '20vw'
+    },
+    // Add Chip Button
+    newChipButton: {
+        marginLeft: theme.spacing( 2 )
+    }
 }));
 
 

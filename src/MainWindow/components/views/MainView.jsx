@@ -192,8 +192,8 @@ const MainViewContent = () => {
 
     // React Event onClicks
     const onOpenConfigsDialogButton = () => {
-        console.log(configs);
         setIsConfigsDialogOpen(true);
+        console.log(configs);
     };
     const onCloseConfigsDialogButton = () => {
         setIsConfigsDialogOpen(false);
@@ -291,25 +291,25 @@ const MainViewContent = () => {
                       <ListItemIcon>
                         <WebIcon />
                       </ListItemIcon>
-                      <ListItemText primary="対象のURL" />
+                      <ListItemText primary="URL" />
                       <ListItemSecondaryAction>
-                        <TextField className={ classes.textfield }
-                                   name="browserURLField"
+                        <TextField className={ classes.textfield } variant="outlined" size="small"
+                                   name="browserURLField" label="対象コンテンツ"
                                    helperText={ !isBrowserURLValid && "URLが不正です" }
                                    value={ browserURL }
                                    onChange={ onBrowserURLChange }
-                                   error={ !isBrowserURLValid }/>
+                                   error={ !isBrowserURLValid } />
                       </ListItemSecondaryAction>
                     </ListItem>
                     <ListItem>
                       <ListItemIcon>
                         <DescriptionIcon />
                       </ListItemIcon>
-                      <ListItemText primary="CSVファイルの保存先" secondary={ csvDestinationPath } />
+                      <ListItemText primary="CSVファイル" secondary={ csvDestinationPath } />
                       <ListItemSecondaryAction>
-                        <Button variant="contained" color="primary" endIcon={ <OpenInNewIcon /> }
+                        <Button variant="contained" size="small" color="default" endIcon={ <OpenInNewIcon /> }
                                 onClick={ onSelectCsvDestinationPathButton }>
-                          参照
+                          保存先を参照
                         </Button>
                       </ListItemSecondaryAction>
                     </ListItem>
@@ -317,11 +317,11 @@ const MainViewContent = () => {
                       <ListItemIcon>
                         <TheatersIcon />
                       </ListItemIcon>
-                      <ListItemText primary="キャプチャの保存先" secondary={ captureDestinationPath } />
+                      <ListItemText primary="画面キャプチャ" secondary={ captureDestinationPath } />
                       <ListItemSecondaryAction>
-                        <Button variant="contained" color="primary" endIcon={ <OpenInNewIcon /> }
+                        <Button variant="contained" size="small" color="default" endIcon={ <OpenInNewIcon /> }
                                 onClick={ onSelectCaptureDestinationPathButton }>
-                          参照
+                          保存先を参照
                         </Button>
                       </ListItemSecondaryAction>
                     </ListItem>

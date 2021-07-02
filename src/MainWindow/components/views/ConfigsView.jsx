@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 //// Material-UI
 import { ThemeProvider } from '@material-ui/core/styles';
-import { AppBar, Toolbar, Grid, Paper, Typography, Tooltip } from '@material-ui/core';
+import { AppBar, Toolbar, Grid, Typography, Tooltip } from '@material-ui/core';
 import { Dialog, Slide } from '@material-ui/core';
 import { Chip } from '@material-ui/core';
 import { Accordion, AccordionSummary, AccordionDetails, AccordionActions } from '@material-ui/core';
-import { IconButton, Button, TextField } from '@material-ui/core';
+import { Button, TextField } from '@material-ui/core';
 import CancelIcon from '@material-ui/icons/Cancel';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
@@ -32,6 +32,12 @@ const ConfigsView = (props) => {
     const [ adoptRange, setAdoptRange ] = useState(null);
     const [ generalDataCollection, setGeneralDataCollection ] = useState(null);
     const [ elementDataCollection, setElementDataCollection ] = useState(null);
+    // Input
+    const [newFilterTagName, setNewFilterTagName] = useState("");
+    const [isNewFilterTagNameValid, setIsNewFilterTagNameValid] = useState(true);
+    const [newFilterAttributes, setNewFilterAttributes] = useState("");
+    const [isNewFilterAttributesValid, setIsNewFilterAttributesValid] = useState(true);
+
 
     // React Hooks Context
     // Configs (global context)
@@ -70,10 +76,18 @@ const ConfigsView = (props) => {
 
     // React Event onClicks
     const onSaveConfigs = () => {
+        let filterTagNamesArray = [];
+        for (let i = 0; i < filterTagNames.length; i++) {
+            filterTagNamesArray.push(filterTagNames[i].label);
+        }
+        let filterAttributesArray = [];
+        for (let i = 0; i < filterAttributes.length; i++) {
+            filterAttributesArray.push(filterAttributes[i].label);
+        }
         setConfigs({
             // Initial Configs
-            filterTagNames: ["address", "article", "aside", "footer", "header", "h1", "h2", "h3", "h4", "h5", "h6", "main", "nav", "section"],
-            filterAttributes: ["role", "aria-label"],
+            filterTagNames: filterTagNamesArray,
+            filterAttributes: filterAttributesArray,
             adoptRange: {
                 start: 1,
                 end: 1
@@ -90,9 +104,71 @@ const ConfigsView = (props) => {
         });
         props.onClose();
     };
-
+    const onAddNewFilterTagName = () => {
+        setFilterTagNames([...filterTagNames, { key: filterTagNames.length, label: newFilterTagName }]);
+        setNewFilterTagName("");
+    };
+    const onAddNewFilterAttributes = () => {
+        setFilterAttributes([...filterAttributes, { key: filterAttributes.length, label: newFilterAttributes }]);
+        setNewFilterAttributes("");
+    };
 
     // React Event onChanges
+    const onNewFilterTagNameChange = (event) => {
+        const name = event.target.value;
+        setNewFilterTagName(name);
+        // If Name Has Space(s)
+        if (name.indexOf(' ') >= 0) {
+            setIsNewFilterTagNameValid(false);
+            return;
+        }
+        // If Exists
+        for (let i = 0; i < filterTagNames.length; i++) {
+            if (filterTagNames[i].label === name) {
+                setIsNewFilterTagNameValid(false);
+                return;
+            }
+        }
+        // If Not Alphabet or Numbers
+        if (/^[a-zA-Z0-9]*$/.test(name) === false) {
+            setIsNewFilterTagNameValid(false);
+            return;
+        }
+        // If Starts with a Number
+        if (/^[0-9][a-zA-Z0-9]*$/.test(name) === true) {
+            setIsNewFilterTagNameValid(false);
+            return;
+        }
+        setIsNewFilterTagNameValid(true);
+    };
+    const onNewFilterAttributesChange = (event) => {
+        const name = event.target.value;
+        setNewFilterAttributes(name);
+        // If Name Has Space(s)
+        if (name.indexOf(' ') >= 0) {
+            setIsNewFilterAttributesValid(false);
+            return;
+        }
+        // If Exists
+        for (let i = 0; i < filterAttributes.length; i++) {
+            if (filterAttributes[i].label === name) {
+                setIsNewFilterAttributesValid(false);
+                return;
+            }
+        }
+        // If Not Alphabet or Numbers
+        if (/^[a-zA-Z0-9-]*$/.test(name) === false) {
+            setIsNewFilterAttributesValid(false);
+            return;
+        }
+        // If Starts with a Number
+        if (/^[0-9][a-zA-Z0-9-]*$/.test(name) === true) {
+            setIsNewFilterAttributesValid(false);
+            return;
+        }
+        setIsNewFilterAttributesValid(true);
+    };
+
 
     // JSX
     const classes = useStyles();
@@ -106,15 +182,15 @@ const ConfigsView = (props) => {
                 <Typography className={ classes.toolBarTitle } variant="h6" component="h1" color="inherit">
                   分析条件の変更
                 </Typography>
+                <Button className={ classes.dialogToolBarButton } variant="contained" color="primary" size="small" disableElevation
+                        onClick={ props.onClose }
+                        startIcon={ <CancelIcon /> }>
+                  キャンセル
+                </Button>
                 <Button className={ classes.dialogToolBarButton } variant="contained" color="secondary" size="small" disableElevation
                         onClick={ onSaveConfigs }
                         startIcon={ <CheckCircleIcon /> }>
                   保存
-                </Button>
-                <Button className={ classes.dialogToolBarButton } variant="contained" color="default" size="small" disableElevation
-                        onClick={ props.onClose }
-                        startIcon={ <CancelIcon /> }>
-                  キャンセル
                 </Button>
               </Toolbar>
             </AppBar>
@@ -137,7 +213,7 @@ const ConfigsView = (props) => {
                             { filterTagNames && filterTagNames.map((data) => {
                                   return (
                                       <li key={ data.key }>
-                                        <Chip className={ classes.chip } color="secondary" size="small"
+                                        <Chip className={ classes.chip } color="default" size="small"
                                               label={ data.label }
                                               onDelete={ onDeleteFilterTagNamesChip(data) } />
                                       </li>
@@ -146,20 +222,60 @@ const ConfigsView = (props) => {
                           </ul>
                         </Grid>
                         <Grid item xs={ 12 }>
-                          <Typography className={ classes.subheading } component="h3">以下の属性を持つ要素</Typography>
+                          <div className={ classes.newChipContainer }>
+                            <TextField className={ classes.newChipTextfield } variant="outlined" size="small"
+                                       label="要素を追加"
+                                       name="newFilterTagNameTextfield"
+                                       helperText={ !isNewFilterTagNameValid && "要素名が不正です" }
+                                       value={ newFilterTagName }
+                                       onChange={ onNewFilterTagNameChange }
+                                       error={ !isNewFilterTagNameValid }
+                                       onKeyDown={ (e) => {
+                                           // Enter key
+                                           if (e.keyCode === 13) {
+                                               onAddNewFilterTagName();
+                                           } } } />
+                            <Button className={ classes.newChipButton } variant="contained" color="default" size="small"
+                                    onClick={ onAddNewFilterTagName }>
+                              追加
+                            </Button>
+                          </div>
+                        </Grid>
+                        <Grid item xs={ 12 }>
+                          <Typography className={ classes.subheading } component="h3">もしくは&nbsp;&nbsp;以下の属性を持つ要素</Typography>
                         </Grid>
                         <Grid item xs={ 12 }>
                           <ul className={ classes.chipsContainer }>
                             { filterAttributes && filterAttributes.map((data) => {
                                   return (
                                       <li key={ data.key }>
-                                        <Chip className={ classes.chip } color="secondary" size="small"
+                                        <Chip className={ classes.chip } color="default" size="small"
                                               label={ data.label }
                                               onDelete={ onDeleteFilterAttributesChip(data) } />
                                       </li>
                                   );
                             }) }
                           </ul>
+                        </Grid>
+                        <Grid item xs={ 12 }>
+                          <div className={ classes.newChipContainer }>
+                            <TextField className={ classes.newChipTextfield } variant="outlined" size="small"
+                                       label="属性を追加"
+                                       name="newFilterAttributesTextfield"
+                                       helperText={ !isNewFilterAttributesValid && "属性名が不正です" }
+                                       value={ newFilterAttributes }
+                                       onChange={ onNewFilterAttributesChange }
+                                       error={ !isNewFilterAttributesValid }
+                                       onKeyDown={ (e) => {
+                                           // Enter key
+                                           if (e.keyCode === 13) {
+                                               onAddNewFilterAttributes();
+                                           } } } />
+                            <Button className={ classes.newChipButton } variant="contained" color="default" size="small"
+                                    onClick={ onAddNewFilterAttributes }>
+                              追加
+                            </Button>
+                          </div>
                         </Grid>
                         <Grid item xs={ 12 }>
                           <Typography className={ classes.subheading } component="h3">収集する要素の階層</Typography>
