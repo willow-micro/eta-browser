@@ -307,7 +307,7 @@ const MainViewContent = () => {
                       </ListItemIcon>
                       <ListItemText primary="CSVファイル" secondary={ csvDestinationPath } />
                       <ListItemSecondaryAction>
-                        <Button variant="contained" size="small" color="default" endIcon={ <OpenInNewIcon /> }
+                        <Button variant="contained" size="small" color="primary" endIcon={ <OpenInNewIcon /> }
                                 onClick={ onSelectCsvDestinationPathButton }>
                           保存先を参照
                         </Button>
@@ -319,7 +319,7 @@ const MainViewContent = () => {
                       </ListItemIcon>
                       <ListItemText primary="画面キャプチャ" secondary={ captureDestinationPath } />
                       <ListItemSecondaryAction>
-                        <Button variant="contained" size="small" color="default" endIcon={ <OpenInNewIcon /> }
+                        <Button variant="contained" size="small" color="primary" endIcon={ <OpenInNewIcon /> }
                                 onClick={ onSelectCaptureDestinationPathButton }>
                           保存先を参照
                         </Button>

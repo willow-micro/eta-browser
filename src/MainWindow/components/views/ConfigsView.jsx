@@ -3,21 +3,22 @@ import React, { useState, useEffect } from 'react';
 //// Material-UI
 import { ThemeProvider } from '@material-ui/core/styles';
 import { AppBar, Toolbar, Grid, Typography, Tooltip } from '@material-ui/core';
-import { Dialog, Slide } from '@material-ui/core';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Slide } from '@material-ui/core';
 import { Chip, Slider } from '@material-ui/core';
 import { Accordion, AccordionSummary, AccordionDetails, AccordionActions, Divider } from '@material-ui/core';
-import { Button, TextField } from '@material-ui/core';
+import { IconButton, Button, TextField } from '@material-ui/core';
 import CancelIcon from '@material-ui/icons/Cancel';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 
 // User
 import { CustomColorPalette, useStyles } from './ConfigsViewStyles';
 import { ConfigsProvider, useConfigsContext } from '../../contexts/ConfigsContext.jsx';
 
 
-// Transition for opening the configs dialog
-const ConfigsDialogTransition = React.forwardRef((props, ref) => {
+// Transition for opening dialogs
+const DialogTransition = React.forwardRef((props, ref) => {
     return <Slide direction="up" ref={ ref } { ...props } />;
 });
 
@@ -76,7 +77,8 @@ const getRootAdoptSliderValueText = (value) => {
 const ConfigsView = (props) => {
     // React Hooks State
     // open
-    const [ isDialogOpen, setIsDialogOpen ] = useState(false);
+    const [ isConfigsDialogOpen, setIsConfigsDialogOpen ] = useState(false);
+    const [ isAdoptRangeHelpDialogOpen, setIsAdoptRangeHelpDialogOpen ] = useState(false);
     // Configs (local state)
     const [ filterTagNames, setFilterTagNames ] = useState(null);
     const [ filterAttributes, setFilterAttributes ] = useState(null);
@@ -100,7 +102,7 @@ const ConfigsView = (props) => {
     // React Hooks Effect
     // "open" property Effect
     useEffect(() => {
-        setIsDialogOpen(props.open);
+        setIsConfigsDialogOpen(props.open);
         if (props.open) {
             // Filter TagNames
             const filterTagNamesForChips = [];
@@ -175,6 +177,12 @@ const ConfigsView = (props) => {
             }
         });
         props.onClose();
+    };
+    const onOpenAdoptRangeHelpDialog = () => {
+        setIsAdoptRangeHelpDialogOpen(true);
+    };
+    const onCloseAdoptRangeHelpDialog = () => {
+        setIsAdoptRangeHelpDialogOpen(false);
     };
     const onAddNewFilterTagName = () => {
         if (isNewFilterTagNameValid) {
@@ -291,8 +299,8 @@ const ConfigsView = (props) => {
     // JSX
     const classes = useStyles();
     return (
-        <Dialog fullScreen open={ isDialogOpen } onClose={ props.onClose }
-                TransitionComponent={ ConfigsDialogTransition }>
+        <Dialog fullScreen open={ isConfigsDialogOpen } onClose={ props.onClose }
+                TransitionComponent={ DialogTransition }>
           <div className={classes.root}>
             <AppBar className={ classes.appBar } elevation={ 2 } position="sticky">
               <Toolbar className={ classes.toolBar } variant="dense"
@@ -353,7 +361,7 @@ const ConfigsView = (props) => {
                                            if (e.keyCode === 13) {
                                                onAddNewFilterTagName();
                                            } } } />
-                            <Button className={ classes.newChipButton } variant="contained" color="default" size="small"
+                            <Button className={ classes.newChipButton } variant="contained" color="primary" size="small"
                                     onClick={ onAddNewFilterTagName }>
                               追加
                             </Button>
@@ -389,14 +397,21 @@ const ConfigsView = (props) => {
                                            if (e.keyCode === 13) {
                                                onAddNewFilterAttribute();
                                            } } } />
-                            <Button className={ classes.newChipButton } variant="contained" color="default" size="small"
+                            <Button className={ classes.newChipButton } variant="contained" color="primary" size="small"
                                     onClick={ onAddNewFilterAttribute }>
                               追加
                             </Button>
                           </div>
                         </Grid>
                         <Grid item xs={ 12 }>
-                          <Typography className={ classes.subheading } component="h3">このうち&nbsp;&nbsp;以下の階層にある要素をデータ収集の対象とする</Typography>
+                          <Typography className={ classes.wrapIconSubheading } component="h3">
+                            このうち&nbsp;&nbsp;以下の階層にある要素をデータ収集の対象とする
+                            <IconButton className={ classes.helpIcon } color="default" size="small"
+                                        onClick={ onOpenAdoptRangeHelpDialog }
+                                        aria-label="delete">
+                              <HelpOutlineIcon />
+                            </IconButton>
+                          </Typography>
                         </Grid>
                         <Grid item xs={ 12 }>
                           <div className={ classes.sliderContainer }>
@@ -460,7 +475,7 @@ const ConfigsView = (props) => {
                                            if (e.keyCode === 13) {
                                                onAddNewCollectAttribute();
                                            } } } />
-                            <Button className={ classes.newChipButton } variant="contained" color="default" size="small"
+                            <Button className={ classes.newChipButton } variant="contained" color="primary" size="small"
                                     onClick={ onAddNewCollectAttribute }>
                               追加
                             </Button>
@@ -472,6 +487,25 @@ const ConfigsView = (props) => {
                 </Grid>
               </Grid>
             </div>
+            <Dialog open={ isAdoptRangeHelpDialogOpen } onClose={ onCloseAdoptRangeHelpDialog }
+                    TransitionComponent={ DialogTransition } keepMounted
+                    aria-labelledby="adopt-range-help-dialog-title"
+                    aria-describedby="adopt-range-help-dialog-description">
+              <DialogTitle id="adopt-range-help-dialog-title">
+                データ収集の対象となる要素の階層について
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText id="adopt-range-help-dialog-description">
+                  指定した階層まで要素が存在しない場合には、要素から取得したデータは空となります。<br/>
+                  また、子要素側で指定した階層の要素と、親要素側で指定した階層の要素が重複した場合には、双方に同じデータが記録されます。
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={ onCloseAdoptRangeHelpDialog } color="primary">
+                  OK
+                </Button>
+              </DialogActions>
+            </Dialog>
           </div>
         </Dialog>
     );

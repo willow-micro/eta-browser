@@ -79,6 +79,21 @@ const useStyles = makeStyles((theme) => ({
         marginLeft: theme.spacing( 4 ),
         userSelect: 'none'
     },
+    // Subheading with an icon
+    wrapIconSubheading: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        fontSize: theme.typography.pxToRem(13),
+        fontWeight: theme.typography.fontWeightRegular,
+        color: CustomColorPalette.Black,
+        marginLeft: theme.spacing( 4 ),
+        userSelect: 'none'
+    },
+    // Inline Help Icon
+    helpIcon: {
+        display: 'inline',
+        color: CustomColorPalette.ExtraDarkGrey,
+    },
     // Chips Container
     chipsContainer: {
         display: 'flex',
