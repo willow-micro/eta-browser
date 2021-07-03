@@ -16,7 +16,7 @@ import CheckBoxIcon from '@material-ui/icons/CheckBox';
 
 // User
 import { CustomColorPalette, useStyles } from './ConfigsViewStyles';
-import { ConfigsProvider, useConfigsContext } from '../../contexts/ConfigsContext.jsx';
+import {  useConfigsContext } from '../../contexts/ConfigsContext.jsx';
 
 
 // Transition for opening dialogs
@@ -436,9 +436,9 @@ const ConfigsView = (props) => {
                 <Grid item xs={ 12 }>
                   <Accordion defaultExpanded={ true }>
                     <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
-        aria-controls="configs-panel-2-content"
-        id="configs-panel-2-header">
-        <Typography className={ classes.heading } component="h2">対象から収集するデータ</Typography>
+                                      aria-controls="configs-panel-2-content"
+                                      id="configs-panel-2-header">
+                      <Typography className={ classes.heading } component="h2">対象から収集するデータ</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                       <Grid container spacing={ 2 }>
@@ -504,28 +504,28 @@ const ConfigsView = (props) => {
                       </Grid>
                     </AccordionDetails>
                   </Accordion>
+                </Grid>
               </Grid>
-              </Grid>
-          </div>
-          <Dialog open={ isAdoptRangeHelpDialogOpen } onClose={ onCloseAdoptRangeHelpDialog }
-                  TransitionComponent={ DialogTransition } keepMounted
-                  aria-labelledby="adopt-range-help-dialog-title"
-                  aria-describedby="adopt-range-help-dialog-description">
-            <DialogTitle id="adopt-range-help-dialog-title">
-              データ収集の対象となる要素の階層について
-            </DialogTitle>
-            <DialogContent>
-              <DialogContentText id="adopt-range-help-dialog-description">
-                指定した階層まで要素が存在しない場合には、要素から取得したデータは空となります。<br/>
-                また、子要素側で指定した階層の要素と、親要素側で指定した階層の要素が重複した場合には、双方に同じデータが記録されます。
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={ onCloseAdoptRangeHelpDialog } color="primary">
-                OK
-              </Button>
-            </DialogActions>
-          </Dialog>
+            </div>
+            <Dialog open={ isAdoptRangeHelpDialogOpen } onClose={ onCloseAdoptRangeHelpDialog }
+                    TransitionComponent={ DialogTransition } keepMounted
+                    aria-labelledby="adopt-range-help-dialog-title"
+                    aria-describedby="adopt-range-help-dialog-description">
+              <DialogTitle id="adopt-range-help-dialog-title">
+                データ収集の対象となる要素の階層について
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText id="adopt-range-help-dialog-description">
+                  指定した階層まで要素が存在しない場合には、要素から取得したデータは空となります。<br/>
+                  また、子要素側で指定した階層の要素と、親要素側で指定した階層の要素が重複した場合には、双方に同じデータが記録されます。
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={ onCloseAdoptRangeHelpDialog } color="primary">
+                  OK
+                </Button>
+              </DialogActions>
+            </Dialog>
           </div>
         </Dialog>
     );

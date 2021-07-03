@@ -10,6 +10,7 @@ const { format } = require('@fast-csv/format');
 const menuTemplate = require('./MenuTemplate.js');
 const Timekeeper = require('./Timekeeper.js');
 let isRecording = false;
+let configs = null;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -91,9 +92,6 @@ app.on('activate', () => {
 
 // IPC Message Rx (from Renderer)
 ipcMain.on("OpenViewer", (event, arg) => {
-    // Get URL
-    let viewerDestinationURL = arg.url;
-
     // Make eta browser window
     viewerWindow = new BrowserWindow({
         width: 800,
@@ -134,14 +132,17 @@ ipcMain.on("OpenViewer", (event, arg) => {
 
     // Send Destination URL when the viewer window is ready
     viewerWindow.webContents.once('dom-ready', () => {
-        viewerWindow.webContents.send("ViewerDestinationURL", {
-            url: viewerDestinationURL
+        viewerWindow.webContents.send("InitializeViewerFromMain", {
+            url: arg.url,
+            configs: arg.configs
         });
         mainWindow.webContents.send("AppMessage", {
             message: "コンテンツを開きました",
             type: "info"
         });
     });
+
+    configs = arg.configs;
 });
 
 ipcMain.on("RequestCsvDestinationPath", (event, arg) => {
@@ -277,24 +278,34 @@ ipcMain.on("StopAnalysis", (event, arg) => {
 // DOMData Thru and Store to CSV
 ipcMain.on("DOMDataFromViewerToMain", (event, arg) => {
     mainWindow.webContents.send("DOMDataFromMainToMainWindow", arg);
-    if (isRecording) {
-        csvFormatStream.write({
-            Time: timekeeper.getElapsedTime(),
-            X: arg.coordinates.x,
-            Y: arg.coordinates.y,
-            MainElemIsTarget: arg.mainElement.isTarget,
-            ParentElemIsTarget: arg.parentElement.isTarget,
-            MainElemTagName: arg.mainElement.tagName,
-            ParentElemTagName: arg.parentElement.tagName,
-            MainElemId: arg.mainElement.id,
-            ParentElemId: arg.parentElement.id,
-            MainElemRole: arg.mainElement.role,
-            ParentElemRole: arg.parentElement.role,
-            MainElemAriaLabel: arg.mainElement.ariaLabel,
-            ParentElemAriaLabel: arg.parentElement.ariaLabel,
-            ElemPath: arg.elemPath,
-            ElemPathAll: arg.elemPathAll
+    if (isRecording && configs) {
+        let csvWriteHashArray = [];
+        if (configs.generalDataCollection.timestamp) {
+            csvWriteHashArray.push(["Timestamp[ms]", timekeeper.getElapsedTime()]);
+        }
+        if (configs.generalDataCollection.coordinates) {
+            csvWriteHashArray.push(["X", arg.coordinates.x]);
+            csvWriteHashArray.push(["Y", arg.coordinates.y]);
+        }
+        if (configs.generalDataCollection.overlapAll) {
+            csvWriteHashArray.push(["Element Overlap (All)", arg.elemOverlapAll]);
+        }
+        if (configs.generalDataCollection.overlapFiltered) {
+            csvWriteHashArray.push(["Element Overlap (Filtered)", arg.elemOverlapFiltered]);
+        }
+        arg.leafSideElementData.map((elementData, index) => {
+            csvWriteHashArray.push([`LeafSideElem(${index + 1}): TagName`, elementData["tagName"]]);
+            configs.elementDataCollection.attributes.map((attribute) => {
+                csvWriteHashArray.push([`LeafSideElem(${index + 1}): ${attribute}`, elementData[attribute]]);
+            });
         });
+        arg.rootSideElementData.map((elementData, index) => {
+            csvWriteHashArray.push([`RootSideElem(-${index + 1}): TagName`, elementData["tagName"]]);
+            configs.elementDataCollection.attributes.map((attribute) => {
+                csvWriteHashArray.push([`RootSideElem(-${index + 1}): ${attribute}`, elementData[attribute]]);
+            });
+        });
+        csvFormatStream.write(csvWriteHashArray);
     }
 });
 

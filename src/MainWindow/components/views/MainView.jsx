@@ -47,29 +47,16 @@ const MainViewContent = () => {
     const [csvDestinationPath, setCsvDestinationPath] = useState("");
     // Capture Destination Path
     const [captureDestinationPath, setCaptureDestinationPath] = useState("");
-    // DOM Data
+    // DOM Data Preview
     //// Coordinates
     const [domCoordinateX, setDomCoordinateX] = useState(0);
     const [domCoordinateY, setDomCoordinateY] = useState(0);
-    //// Main Target Element
-    const [domIsTarget, setDomIsTarget] = useState("not");
+    //// Element Overlap (All)
+    const [elemOverlapAll, setElemOverlapAll] = useState("<none>");
+    //// Element Overlap (Filtered)
+    const [elemOverlapFiltered, setElemOverlapFiltered] = useState("<none>");
+    //// TagName
     const [domTagName, setDomTagName] = useState("<none>");
-    const [domId, setDomId] = useState("<none>");
-    const [domRole, setDomRole] = useState("<none>");
-    const [domAriaLabel, setDomAriaLabel] = useState("<none>");
-    //// Parent Target Element
-    const [parentDomIsTarget, setParentDomIsTarget] = useState("not");
-    const [parentDomCoordinateX, setParentDomCoordinateX] = useState(0);
-    const [parentDomCoordinateY, setParentDomCoordinateY] = useState(0);
-    const [parentDomTagName, setParentDomTagName] = useState("<none>");
-    const [parentDomId, setParentDomId] = useState("<none>");
-    const [parentDomRole, setParentDomRole] = useState("<none>");
-    const [parentDomAriaLabel, setParentDomAriaLabel] = useState("<none>");
-    //// Element Path (Filtered)
-    const [elemPath, setElemPath] = useState("<none>");
-    //// Element Path (All)
-    const [elemPathAll, setElemPathAll] = useState("<none>");
-
 
     // React Hooks Context
     // Configs
@@ -95,22 +82,12 @@ const MainViewContent = () => {
         // Coordinates
         setDomCoordinateX(arg.coordinates.x);
         setDomCoordinateY(arg.coordinates.y);
-        // Main Element
-        setDomIsTarget(arg.mainElement.isTarget ? "target" : "not");
-        setDomTagName(arg.mainElement.tagName ? arg.mainElement.tagName : "<none>");
-        setDomId(arg.mainElement.id ? arg.mainElement.id : "<none>");
-        setDomRole(arg.mainElement.role ? arg.mainElement.role : "<none>");
-        setDomAriaLabel(arg.mainElement.ariaLabel ? arg.mainElement.ariaLabel : "<none>");
-        // Parent Element
-        setParentDomIsTarget(arg.parentElement.isTarget ? "target" : "not");
-        setParentDomTagName(arg.parentElement.tagName ? arg.parentElement.tagName : "<none>");
-        setParentDomId(arg.parentElement.id ? arg.parentElement.id : "<none>");
-        setParentDomRole(arg.parentElement.role ? arg.parentElement.role : "<none>");
-        setParentDomAriaLabel(arg.parentElement.ariaLabel ? arg.parentElement.ariaLabel : "<none>");
-        // Element Path (Filtered)
-        setElemPath(arg.elemPath ? arg.elemPath : "<none>");
-        // Element Path (All)
-        setElemPathAll(arg.elemPathAll ? arg.elemPathAll : "<none>");
+        // Element Overlap (Filtered)
+        setElemOverlapFiltered(arg.elemOverlapFiltered ? arg.elemOverlapFiltered : "<none>");
+        // Element Overlap (All)
+        setElemOverlapAll(arg.elemOverlapAll ? arg.elemOverlapAll : "<none>");
+        // TagName
+        setDomTagName(arg.leafSideElementData[0].tagName ? arg.leafSideElementData[0].tagName : "<none>");
     };
     const onViewerClosed = (event, arg) => {
         // Button State
@@ -119,22 +96,12 @@ const MainViewContent = () => {
         // Coordinates
         setDomCoordinateX(0);
         setDomCoordinateY(0);
+        // Element Overlap (All)
+        setElemOverlapAll("<none>");
+        // Element Overlap (Filtered)
+        setElemOverlapFiltered("<none>");
         // Main Element
-        setDomIsTarget("not");
         setDomTagName("<none>");
-        setDomId("<none>");
-        setDomRole("<none>");
-        setDomAriaLabel("<none>");
-        // Parent Element
-        setParentDomIsTarget("not");
-        setParentDomTagName("<none>");
-        setParentDomId("<none>");
-        setParentDomRole("<none>");
-        setParentDomAriaLabel("<none>");
-        // Element Path (Filtered)
-        setElemPath("<none>");
-        // Element Path (All)
-        setElemPathAll("<none>");
     };
 
     // React Hooks useEffect
@@ -344,7 +311,7 @@ const MainViewContent = () => {
                 <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
                                   aria-controls="debug-table-panel-content"
                                   id="debug-table-panel-header">
-                  <Typography className={ classes.heading } component="h2">注視要素</Typography>
+                  <Typography className={ classes.heading } component="h2">注視要素のプレビュー</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   <TableContainer>
@@ -353,8 +320,7 @@ const MainViewContent = () => {
                       <TableHead>
                         <TableRow>
                           <TableCell ></TableCell>
-                          <TableCell align="center">Main</TableCell>
-                          <TableCell align="center">Parent</TableCell>
+                          <TableCell align="center">Leaf Side Element (1)</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -371,8 +337,8 @@ const MainViewContent = () => {
                             Overlap (All)
                           </TableCell>
                           <TableCell align="center" colSpan={ 2 }
-                                     style={ { color: (elemPathAll === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
-                            { elemPathAll }
+                                     style={ { color: (elemOverlapAll === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
+                            { elemOverlapAll }
                           </TableCell>
                         </TableRow>
                         <TableRow>
@@ -381,22 +347,8 @@ const MainViewContent = () => {
                             Overlap (Filtered)
                           </TableCell>
                           <TableCell align="center" colSpan={ 2 }
-                                     style={ { color: (elemPath === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
-                            { elemPath }
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell component="th">
-                            <SearchIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Filtered target or not
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (domIsTarget === "not" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
-                            { domIsTarget }
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (parentDomIsTarget === "not" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
-                            { parentDomIsTarget }
+                                     style={ { color: (elemOverlapFiltered === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
+                            { elemOverlapFiltered }
                           </TableCell>
                         </TableRow>
                         <TableRow>
@@ -407,52 +359,6 @@ const MainViewContent = () => {
                           <TableCell align="center"
                                      style={ { color: (domTagName === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { domTagName }
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (parentDomTagName === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
-                            { parentDomTagName }
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell component="th">
-                            <CodeIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Role
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (domRole === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
-                            { domRole }
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (parentDomRole === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
-                            { parentDomRole }
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell component="th">
-                            <CropFreeIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            ID
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (domId === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
-                            { domId }
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (parentDomId === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
-                            { parentDomId }
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell component="th">
-                            <LabelIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Label
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (domAriaLabel === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
-                            { domAriaLabel }
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (parentDomAriaLabel === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
-                            { parentDomAriaLabel }
                           </TableCell>
                         </TableRow>
                       </TableBody>
