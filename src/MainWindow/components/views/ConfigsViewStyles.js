@@ -89,8 +89,8 @@ const useStyles = makeStyles((theme) => ({
         marginLeft: theme.spacing( 4 ),
         userSelect: 'none'
     },
-    // Inline Help Icon
-    helpIcon: {
+    // Inline Icon
+    inlineIcon: {
         display: 'inline',
         color: CustomColorPalette.ExtraDarkGrey,
     },
@@ -107,6 +107,7 @@ const useStyles = makeStyles((theme) => ({
     },
     // Chip
     chip: {
+        userSelect: 'none',
         marginTop: theme.spacing( 1 ),
         marginRight: theme.spacing( 1 ),
         marginBottom: theme.spacing( 0 ),
@@ -155,6 +156,13 @@ const useStyles = makeStyles((theme) => ({
         marginRight: theme.spacing( 6 ),
         marginBottom: theme.spacing( 0 ),
         marginLeft: theme.spacing( 6 )
+    },
+    // FromControlLabel
+    formControlLabel: {
+        fontSize: theme.typography.pxToRem(15),
+        fontWeight: theme.typography.fontWeightRegular,
+        color: CustomColorPalette.Black,
+        userSelect: 'none'
     }
 }));
 

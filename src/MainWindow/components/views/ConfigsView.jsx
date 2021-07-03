@@ -11,7 +11,7 @@ import { FormGroup, FormControlLabel, Checkbox } from '@material-ui/core';
 import CancelIcon from '@material-ui/icons/Cancel';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
+import InfoIcon from '@material-ui/icons/Info';
 import CheckBoxIcon from '@material-ui/icons/CheckBox';
 
 // User
@@ -80,7 +80,7 @@ const ConfigsView = (props) => {
     // React Hooks State
     // open
     const [ isConfigsDialogOpen, setIsConfigsDialogOpen ] = useState(false);
-    const [ isAdoptRangeHelpDialogOpen, setIsAdoptRangeHelpDialogOpen ] = useState(false);
+    const [ isAdoptRangeInfoDialogOpen, setIsAdoptRangeInfoDialogOpen ] = useState(false);
     // Configs (local state)
     const [ filterTagNames, setFilterTagNames ] = useState(null);
     const [ filterAttributes, setFilterAttributes ] = useState(null);
@@ -175,11 +175,11 @@ const ConfigsView = (props) => {
         });
         props.onClose();
     };
-    const onOpenAdoptRangeHelpDialog = () => {
-        setIsAdoptRangeHelpDialogOpen(true);
+    const onOpenAdoptRangeInfoDialog = () => {
+        setIsAdoptRangeInfoDialogOpen(true);
     };
-    const onCloseAdoptRangeHelpDialog = () => {
-        setIsAdoptRangeHelpDialogOpen(false);
+    const onCloseAdoptRangeInfoDialog = () => {
+        setIsAdoptRangeInfoDialogOpen(false);
     };
     const onAddNewFilterTagName = () => {
         if (isNewFilterTagNameValid) {
@@ -406,10 +406,10 @@ const ConfigsView = (props) => {
                         <Grid item xs={ 12 }>
                           <Typography className={ classes.wrapIconSubheading } component="h3">
                             このうち&nbsp;&nbsp;以下の階層にある要素をデータ収集の対象とする
-                            <IconButton className={ classes.helpIcon } color="default" size="small"
-                                        onClick={ onOpenAdoptRangeHelpDialog }
+                            <IconButton className={ classes.inlineIcon } color="default" size="small"
+                                        onClick={ onOpenAdoptRangeInfoDialog }
                                         aria-label="delete">
-                              <HelpOutlineIcon />
+                              <InfoIcon />
                             </IconButton>
                           </Typography>
                         </Grid>
@@ -447,22 +447,25 @@ const ConfigsView = (props) => {
                         </Grid>
                         <Grid item xs={ 12 }>
                           <FormGroup row className={ classes.checkboxesContainer }>
-                            <FormControlLabel disabled
-                                              control={ <Checkbox name="timestamp" size="small"
+                            <FormControlLabel disabled classes={ { label: classes.formControlLabel } }
+                                              control={ <Checkbox name="timestamp" size="small" color="primary"
                                                                   checked /> }
-                                              label="Timestamp" />
-                            <FormControlLabel control={ <Checkbox name="coordinates" size="small"
+                                              label="Timestamp[ms]" />
+                            <FormControlLabel classes={ { label: classes.formControlLabel } }
+                                              control={ <Checkbox name="coordinates" size="small" color="primary"
                                                                   checked={ generalDataCollection ? generalDataCollection.coordinates : false }
                                                                   onChange={ onGeneralDataCollectionCheckboxesChange } /> }
-                                              label="Coordinates" />
-                            <FormControlLabel control={ <Checkbox name="overlapAll" size="small"
+                                              label="Coordinates (X,Y)" />
+                            <FormControlLabel classes={ { label: classes.formControlLabel } }
+                                              control={ <Checkbox name="overlapAll" size="small" color="primary"
                                                                   checked={ generalDataCollection ? generalDataCollection.overlapAll : false }
                                                                   onChange={ onGeneralDataCollectionCheckboxesChange } /> }
-                                              label="Overlap(All)" />
-                            <FormControlLabel control={ <Checkbox name="overlapFiltered" size="small"
+                                              label="Element Overlap (All)" />
+                            <FormControlLabel classes={ { label: classes.formControlLabel } }
+                                              control={ <Checkbox name="overlapFiltered" size="small" color="primary"
                                                                   checked={ generalDataCollection ? generalDataCollection.overlapFiltered : false }
                                                                   onChange={ onGeneralDataCollectionCheckboxesChange } /> }
-                                              label="Overlap(Filtered)" />
+                                              label="Element Overlap (Filtered)" />
                           </FormGroup>
                         </Grid>
                         <Grid item xs={ 12 }>
@@ -507,21 +510,21 @@ const ConfigsView = (props) => {
                 </Grid>
               </Grid>
             </div>
-            <Dialog open={ isAdoptRangeHelpDialogOpen } onClose={ onCloseAdoptRangeHelpDialog }
+            <Dialog open={ isAdoptRangeInfoDialogOpen } onClose={ onCloseAdoptRangeInfoDialog }
                     TransitionComponent={ DialogTransition } keepMounted
-                    aria-labelledby="adopt-range-help-dialog-title"
-                    aria-describedby="adopt-range-help-dialog-description">
-              <DialogTitle id="adopt-range-help-dialog-title">
+                    aria-labelledby="adopt-range-info-dialog-title"
+                    aria-describedby="adopt-range-info-dialog-description">
+              <DialogTitle id="adopt-range-info-dialog-title">
                 データ収集の対象となる要素の階層について
               </DialogTitle>
               <DialogContent>
-                <DialogContentText id="adopt-range-help-dialog-description">
+                <DialogContentText id="adopt-range-info-dialog-description">
                   指定した階層まで要素が存在しない場合には、要素から取得したデータは空となります。<br/>
                   また、子要素側で指定した階層の要素と、親要素側で指定した階層の要素が重複した場合には、双方に同じデータが記録されます。
                 </DialogContentText>
               </DialogContent>
               <DialogActions>
-                <Button onClick={ onCloseAdoptRangeHelpDialog } color="primary">
+                <Button onClick={ onCloseAdoptRangeInfoDialog } color="primary">
                   OK
                 </Button>
               </DialogActions>

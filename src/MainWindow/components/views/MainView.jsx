@@ -13,10 +13,9 @@ import WebIcon from '@material-ui/icons/Web';
 import DescriptionIcon from '@material-ui/icons/Description';
 import TheatersIcon from '@material-ui/icons/Theaters';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
-import SearchIcon from '@material-ui/icons/Search';
 import CodeIcon from '@material-ui/icons/Code';
-import LabelIcon from '@material-ui/icons/Label';
-import CropFreeIcon from '@material-ui/icons/CropFree';
+//import LabelIcon from '@material-ui/icons/Label';
+//import CropFreeIcon from '@material-ui/icons/CropFree';
 import LocationSearchingIcon from '@material-ui/icons/LocationSearching';
 import LayersIcon from '@material-ui/icons/Layers'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
@@ -334,7 +333,7 @@ const MainViewContent = () => {
                         <TableRow>
                           <TableCell component="th">
                             <LayersIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Overlap (All)
+                            Element Overlap (All)
                           </TableCell>
                           <TableCell align="center" colSpan={ 2 }
                                      style={ { color: (elemOverlapAll === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
@@ -344,7 +343,7 @@ const MainViewContent = () => {
                         <TableRow>
                           <TableCell component="th">
                             <LayersIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Overlap (Filtered)
+                            Element Overlap (Filtered)
                           </TableCell>
                           <TableCell align="center" colSpan={ 2 }
                                      style={ { color: (elemOverlapFiltered === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
