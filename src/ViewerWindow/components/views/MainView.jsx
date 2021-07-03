@@ -16,7 +16,7 @@ function useHookWithRefCallback() {
     const setRef = useCallback((node) => {
         if (ref.current) {
             // Make sure to cleanup any events/references added to the last instance
-            ref.current.removeEventListener("ipc-message");
+            ref.current.removeEventListener("ipc-message", null);
         }
 
         if (node) {
@@ -60,6 +60,8 @@ const WebView = React.forwardRef((props, ref) => {
 
 // Main Component
 const MainView = () => {
+    // Configs (read only)
+    let configs = null;
 
     // Create capturer
     const capturer = new Capturer(2000000, 1000);   // bit rate [bps], data retrieve timeslice [ms]
@@ -85,15 +87,19 @@ const MainView = () => {
         window.viewerIPCSend("CaptureEndedInViewer", {});
     });
 
-    // useState
+
+    // React Hooks useState
     const [viewerDestinationURL, setViewerDestinationURL] = useState("");
 
-    // useRef
+
+    // React Hooks useRef
     const [webViewRefObj, webViewRef] = useHookWithRefCallback();
 
+
     // IPC Receive Callbacks
-    const onViewerDestinationURL = (event, arg) => {
+    const onInitializeViewerFromMain = (event, arg) => {
         setViewerDestinationURL(arg.url);
+        configs = arg.configs;
     };
     const onOpenDevTools = (event, arg) => {
         if (webViewRefObj.current && !webViewRefObj.current.isDevToolsOpened()) {
@@ -106,18 +112,26 @@ const MainView = () => {
         }
     };
     const onStartAnalysis = (event, arg) => {
-        console.log("Start Analysis");
-        capturer.start("ETA Browser (Viewer)", 800, 2560, 600, 1600);   // title, min width, max width, min height, max height
+        if (webViewRefObj.current && configs) {
+            webViewRefObj.current.send("InitializeWebViewFromViewer", {
+                configs: configs
+            });
+            console.log("Start Analysis");
+            console.log(configs);
+            capturer.start("ETA Browser (Viewer)", 800, 2560, 600, 1600);   // title, min width, max width, min height, max height
+        }
     };
     const onStopAnalysis = (event, arg) => {
         console.log("Stop Analysis");
         capturer.stop();
     };
 
-    // useEffect
+
+    // React Hooks useEffect
+    //// IPC Effect
     useEffect(() => {
         // IPC Receive (from Main) Create Listener
-        window.viewerIPCOn("ViewerDestinationURL", onViewerDestinationURL);
+        window.viewerIPCOn("InitializeViewerFromMain", onInitializeViewerFromMain);
         window.viewerIPCOn("OpenDevTools", onOpenDevTools);
         window.viewerIPCOn("GazeDataFromMainToViewer", onGazeDataFromMainToViewer);
         window.viewerIPCOn("StartAnalysis", onStartAnalysis);
@@ -125,7 +139,7 @@ const MainView = () => {
         // Cleanup
         return () => {
             // IPC Receive (from Main) Remove Listener
-            window.viewerIPCRemove("ViewerDestinationURL", onViewerDestinationURL);
+            window.viewerIPCRemove("InitializeViewerFromMain", onInitializeViewerFromMain);
             window.viewerIPCRemove("OpenDevTools", onOpenDevTools);
             window.viewerIPCRemove("GazeDataFromMainToViewer", onGazeDataFromMainToViewer);
             window.viewerIPCRemove("StartAnalysis", onStartAnalysis);
@@ -135,6 +149,7 @@ const MainView = () => {
         };
     }, []);
 
+
     // JSX
     return (
         <WebView url={ viewerDestinationURL } ref={ webViewRef } />
@@ -142,6 +157,4 @@ const MainView = () => {
 };
 
 
-// Function Componentは，宣言とは別途exportする必要がある．
-// 同時にexportすると，正しくトランスパイルされない．これは通常のconst定数も同様かと思われる
 export default MainView;

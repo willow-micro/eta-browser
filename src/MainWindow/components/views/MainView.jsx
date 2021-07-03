@@ -1,224 +1,65 @@
 // System
 import React, { useState, useEffect } from 'react';
 //// Material-UI
-import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
-import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
-import { AppBar, Toolbar, Grid, Paper, Typography } from '@material-ui/core';
+import { ThemeProvider } from '@material-ui/core/styles';
+import { AppBar, Toolbar, Grid, Paper, Typography, Tooltip } from '@material-ui/core';
 import { List, ListItem, ListItemIcon, ListItemText, ListItemSecondaryAction, Divider } from '@material-ui/core';
 import { Accordion, AccordionSummary, AccordionDetails, AccordionActions } from '@material-ui/core';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@material-ui/core';
-import { ButtonGroup, Button, TextField } from '@material-ui/core';
+import { IconButton, ButtonGroup, Button, TextField } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
-import { grey, blueGrey, brown } from '@material-ui/core/colors';
+import TuneIcon from '@material-ui/icons/Tune';
 import WebIcon from '@material-ui/icons/Web';
 import DescriptionIcon from '@material-ui/icons/Description';
 import TheatersIcon from '@material-ui/icons/Theaters';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
-import SearchIcon from '@material-ui/icons/Search';
 import CodeIcon from '@material-ui/icons/Code';
-import LabelIcon from '@material-ui/icons/Label';
-import CropFreeIcon from '@material-ui/icons/CropFree';
+//import LabelIcon from '@material-ui/icons/Label';
+//import CropFreeIcon from '@material-ui/icons/CropFree';
 import LocationSearchingIcon from '@material-ui/icons/LocationSearching';
 import LayersIcon from '@material-ui/icons/Layers'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-
+////// Notistack
 import { SnackbarProvider, useSnackbar } from 'notistack';
 
-
 // User
-
-// Colors
-// Material Design Color Tool: https://material.io/resources/color/#!/?view.left=0&view.right=0&primary.color=455A64&secondary.color=8D6E63&primary.text.color=FAFAFA&secondary.text.color=FAFAFA
-const SystemColor = {
-    Primary: blueGrey[700],
-    Secondary: brown[400],
-    PrimaryText: grey[50],
-    SecondaryText: grey[50],
-    White: grey[50],
-    Black: grey[900],
-    LightGrey: grey[100],
-    DarkGrey: grey[300],
-    ExtraDarkGrey: grey[500]
-};
-
-// Material-UI Custom Theme Application
-// Default values: https://material-ui.com/customization/default-theme/
-const customTheme = createMuiTheme( {
-    // Spacingの設定
-    spacing: 8,                 // デフォルト値: 8px
-    // カラースキームの設定
-    palette: {
-        // プライマリ
-        primary: {
-            main: SystemColor.Primary,
-            contrastText: SystemColor.PrimaryText,
-        },
-        // セカンダリ
-        secondary: {
-            main: SystemColor.Secondary,
-            contrastText: SystemColor.SecondaryText,
-        },
-    },
-    // フォントの設定
-    typography: {
-        // すべてのフォントファミリーの変更
-        fontFamily: [
-            'Roboto',
-            'Noto Sans JP',
-            'sans-serif',
-        ].join( ',' ),
-        // フォントサイズの変更
-        // htmlFontSizeを変更すると, rem (root em)で指定したフォントサイズが影響を受ける．
-        // よってTypographyの各variantのフォントサイズも変化してしまうため，これは変更していない
-        htmlFontSize: 16,       // デフォルト値: 16px
-    },
-    // Material-UIのコンポーネントのデフォルトスタイルの上書き
-    overrides: {
-        // Typography
-        typography: {
-            color: 'inherit',
-            variantMapping: {
-                h1: 'h2',
-                h2: 'h2',
-                h3: 'h2',
-                h4: 'h2',
-                h5: 'h2',
-                h6: 'h2',
-                subtitle1: 'h2',
-                subtitle2: 'h2',
-                body1: 'span',
-                body2: 'span',
-            },
-        },
-        // TextField
-        MuiTextField: {
-            root: {
-                // InputPropsにminおよびmaxを指定した際，その値に応じて親要素より小さくなってしまう現象を防ぐ
-                width: '100%'
-            }
-        }
-    }
-} );
-
-// Customise Styles
-const useStyles = makeStyles((theme) => ({
-    // Root
-    root: {
-        flexGrow: 1
-    },
-    // Label
-    label: {
-        userSelect: 'none'
-    },
-    // AppBar
-    appBar: {
-        backgroundColor: SystemColor.Primary,
-        color: SystemColor.PrimaryText
-    },
-    // ToolBar (inside AppBar) Has Button, etc.
-    toolBar: {
-        flexWrap: 'nowrap',
-        alignItems: 'center'
-    },
-    // ToolBar Title
-    toolBarTitle: {
-        marginLeft: theme.spacing( 2 ),
-        userSelect: 'none'
-    },
-    // Paper
-    paper: {
-        padding: theme.spacing( 2 ),
-        color: SystemColor.Black,
-    },
-    // Heading
-    heading: {
-        fontSize: theme.typography.pxToRem(15),
-        fontWeight: theme.typography.fontWeightRegular,
-        color: SystemColor.Black,
-        marginLeft: theme.spacing( 3 )
-    },
-    // Setup Accordion Details
-    setupAccordionDetails: {
-        display: 'block',
-        paddingTop: theme.spacing( 0 ),
-        paddingRight: theme.spacing( 2 ),
-        paddingBottom: theme.spacing( 0 ),
-        paddingLeft: theme.spacing( 2 )
-    },
-    // Setup Accordion Actions
-    setupAccordionActions: {
-        display: 'flex',
-        justifyContent: 'center',
-        padding: theme.spacing( 2 )
-    },
-    // Text fields
-    textfield: {
-        width: '50vw'
-    },
-    // Destination Path Selector Container
-    pathSelector: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    },
-    // Destination Path
-    destinationPath: {
-        marginRight: theme.spacing( 2 ),
-        color: SystemColor.Black,
-        textAlign: 'right'
-    },
-    // Debug Table Heading
-    debugTableHeading: {
-        fontSize: theme.typography.pxToRem(15),
-        fontWeight: theme.typography.fontWeightRegular,
-        color: SystemColor.Black,
-        marginLeft: theme.spacing( 3 )
-    },
-    // Debug Table: Icon Margin
-    debugTableIcon: {
-        marginRight: theme.spacing( 3 ),
-        marginLeft: theme.spacing( 3 ),
-        verticalAlign: 'sub'
-    }
-}));
+import { CustomColorPalette, CustomTheme, useStyles } from './MainViewStyles';
+import ConfigsView from './ConfigsView.jsx';
+import { ConfigsProvider, useConfigsContext } from '../../contexts/ConfigsContext.jsx';
 
 
 // Main Component
 const MainViewContent = () => {
-    // useState
+    // React Hooks State
+    // Configs Dialog
+    const [isConfigsDialogOpen, setIsConfigsDialogOpen] = useState(false);
+    // Button group
     const [buttonState, setButtonState] = useState(0);
     const [doesViewerWindowExists, setDoesViewerWindowExists] = useState(false);
-
+    // App Message
     const [appMessage, setAppMessage] = useState("起動しました");
     const [appMessageType, setAppMessageType] = useState("success");
+    // Viewer Destination URL
     const [browserURL, setBrowserURL] = useState("file:///Users/kawa/Wakayama/2021/HCDLab/sample/eta-sample-menu/build/index.html");
     const [isBrowserURLValid, setIsBrowserURLValid] = useState(true);
     // CSV Destination Path
     const [csvDestinationPath, setCsvDestinationPath] = useState("");
     // Capture Destination Path
     const [captureDestinationPath, setCaptureDestinationPath] = useState("");
-
-    // Coordinates
+    // DOM Data Preview
+    //// Coordinates
     const [domCoordinateX, setDomCoordinateX] = useState(0);
     const [domCoordinateY, setDomCoordinateY] = useState(0);
-    // Main Target Element
-    const [domIsTarget, setDomIsTarget] = useState("not");
+    //// Element Overlap (All)
+    const [elemOverlapAll, setElemOverlapAll] = useState("<none>");
+    //// Element Overlap (Filtered)
+    const [elemOverlapFiltered, setElemOverlapFiltered] = useState("<none>");
+    //// TagName
     const [domTagName, setDomTagName] = useState("<none>");
-    const [domId, setDomId] = useState("<none>");
-    const [domRole, setDomRole] = useState("<none>");
-    const [domAriaLabel, setDomAriaLabel] = useState("<none>");
-    // Parent Target Element
-    const [parentDomIsTarget, setParentDomIsTarget] = useState("not");
-    const [parentDomCoordinateX, setParentDomCoordinateX] = useState(0);
-    const [parentDomCoordinateY, setParentDomCoordinateY] = useState(0);
-    const [parentDomTagName, setParentDomTagName] = useState("<none>");
-    const [parentDomId, setParentDomId] = useState("<none>");
-    const [parentDomRole, setParentDomRole] = useState("<none>");
-    const [parentDomAriaLabel, setParentDomAriaLabel] = useState("<none>");
-    // Element Path (Filtered)
-    const [elemPath, setElemPath] = useState("<none>");
-    // Element Path (All)
-    const [elemPathAll, setElemPathAll] = useState("<none>");
+
+    // React Hooks Context
+    // Configs
+    const { configs, setConfigs } = useConfigsContext();
 
 
     // IPC Receive Callbacks
@@ -240,22 +81,12 @@ const MainViewContent = () => {
         // Coordinates
         setDomCoordinateX(arg.coordinates.x);
         setDomCoordinateY(arg.coordinates.y);
-        // Main Element
-        setDomIsTarget(arg.mainElement.isTarget ? "target" : "not");
-        setDomTagName(arg.mainElement.tagName ? arg.mainElement.tagName : "<none>");
-        setDomId(arg.mainElement.id ? arg.mainElement.id : "<none>");
-        setDomRole(arg.mainElement.role ? arg.mainElement.role : "<none>");
-        setDomAriaLabel(arg.mainElement.ariaLabel ? arg.mainElement.ariaLabel : "<none>");
-        // Parent Element
-        setParentDomIsTarget(arg.parentElement.isTarget ? "target" : "not");
-        setParentDomTagName(arg.parentElement.tagName ? arg.parentElement.tagName : "<none>");
-        setParentDomId(arg.parentElement.id ? arg.parentElement.id : "<none>");
-        setParentDomRole(arg.parentElement.role ? arg.parentElement.role : "<none>");
-        setParentDomAriaLabel(arg.parentElement.ariaLabel ? arg.parentElement.ariaLabel : "<none>");
-        // Element Path (Filtered)
-        setElemPath(arg.elemPath ? arg.elemPath : "<none>");
-        // Element Path (All)
-        setElemPathAll(arg.elemPathAll ? arg.elemPathAll : "<none>");
+        // Element Overlap (Filtered)
+        setElemOverlapFiltered(arg.elemOverlapFiltered ? arg.elemOverlapFiltered : "<none>");
+        // Element Overlap (All)
+        setElemOverlapAll(arg.elemOverlapAll ? arg.elemOverlapAll : "<none>");
+        // TagName
+        setDomTagName(arg.leafSideElementData[0].tagName ? arg.leafSideElementData[0].tagName : "<none>");
     };
     const onViewerClosed = (event, arg) => {
         // Button State
@@ -264,25 +95,16 @@ const MainViewContent = () => {
         // Coordinates
         setDomCoordinateX(0);
         setDomCoordinateY(0);
+        // Element Overlap (All)
+        setElemOverlapAll("<none>");
+        // Element Overlap (Filtered)
+        setElemOverlapFiltered("<none>");
         // Main Element
-        setDomIsTarget("not");
         setDomTagName("<none>");
-        setDomId("<none>");
-        setDomRole("<none>");
-        setDomAriaLabel("<none>");
-        // Parent Element
-        setParentDomIsTarget("not");
-        setParentDomTagName("<none>");
-        setParentDomId("<none>");
-        setParentDomRole("<none>");
-        setParentDomAriaLabel("<none>");
-        // Element Path (Filtered)
-        setElemPath("<none>");
-        // Element Path (All)
-        setElemPathAll("<none>");
     };
 
-    // useEffect
+    // React Hooks useEffect
+    //// IPC Effects
     useEffect(() => {
         // IPC Receive (from Main) Create Listener
         window.api.on("AppMessage", onAppMessage);
@@ -300,7 +122,7 @@ const MainViewContent = () => {
             window.api.remove("ViewerClosed", onViewerClosed);
         };
     }, []);
-
+    //// Button group Effects
     useEffect(() => {
         // No active button
         if (buttonState === 0) {
@@ -322,7 +144,7 @@ const MainViewContent = () => {
                 }
             }
         } else if (buttonState === 1) {
-            // "OpenBrowser" button is active
+            // "OpenViewer" button is active
             if (doesViewerWindowExists) {
                 // There is an opened browser
                 setButtonState(0);
@@ -330,23 +152,30 @@ const MainViewContent = () => {
         }
     }, [csvDestinationPath, captureDestinationPath, buttonState, doesViewerWindowExists]);
 
-    // useSnackbar (notistack)
+    // Notistack useSnackbar
     const { enqueueSnackbar } = useSnackbar();
 
 
-    // onClicks
-    const onSelectCsvDestinationPath = () => {
+    // React Event onClicks
+    const onOpenConfigsDialogButton = () => {
+        setIsConfigsDialogOpen(true);
+        console.log(configs);
+    };
+    const onCloseConfigsDialogButton = () => {
+        setIsConfigsDialogOpen(false);
+    };
+    const onSelectCsvDestinationPathButton = () => {
         window.api.send("RequestCsvDestinationPath", {});
     };
-    const onSelectCaptureDestinationPath = () => {
+    const onSelectCaptureDestinationPathButton = () => {
         window.api.send("RequestCaptureDestinationPath", {});
     };
-
-    const onOpenBrowserButton = () => {
+    const onOpenViewerButton = () => {
         if (isBrowserURLValid && browserURL.length > 0) {
-            console.log("OpenBrowserButton");
-            window.api.send("OpenBrowser", {
-                url: browserURL
+            console.log("OpenViewerButton");
+            window.api.send("OpenViewer", {
+                url: browserURL,
+                configs: configs
             });
             setButtonState(2);
             setDoesViewerWindowExists(true);
@@ -372,7 +201,7 @@ const MainViewContent = () => {
     };
 
 
-    // onChanges
+    // React Event onChanges
     const onBrowserURLChange = (event) => {
         setBrowserURL(event.target.value);
         // Check if the given url is valid
@@ -398,6 +227,12 @@ const MainViewContent = () => {
               <Typography className={ classes.toolBarTitle } variant="h6" component="h1" color="inherit">
                 コンソール
               </Typography>
+              <Tooltip title="分析条件の変更">
+                <IconButton color="inherit" aria-label="分析条件の変更"
+                            onClick={ onOpenConfigsDialogButton }>
+                  <TuneIcon />
+                </IconButton>
+              </Tooltip>
             </Toolbar>
           </AppBar>
           { /* Content */ }
@@ -422,25 +257,25 @@ const MainViewContent = () => {
                       <ListItemIcon>
                         <WebIcon />
                       </ListItemIcon>
-                      <ListItemText primary="対象のURL" />
+                      <ListItemText primary="URL" />
                       <ListItemSecondaryAction>
-                        <TextField className={ classes.textfield }
-                                   name="browserURLField"
+                        <TextField className={ classes.textfield } variant="outlined" size="small"
+                                   name="browserURLField" label="コンテンツ"
                                    helperText={ !isBrowserURLValid && "URLが不正です" }
                                    value={ browserURL }
                                    onChange={ onBrowserURLChange }
-                                   error={ !isBrowserURLValid }/>
+                                   error={ !isBrowserURLValid } />
                       </ListItemSecondaryAction>
                     </ListItem>
                     <ListItem>
                       <ListItemIcon>
                         <DescriptionIcon />
                       </ListItemIcon>
-                      <ListItemText primary="CSVファイルの保存先" secondary={ csvDestinationPath } />
+                      <ListItemText primary="CSVファイル" secondary={ csvDestinationPath } />
                       <ListItemSecondaryAction>
-                        <Button variant="contained" color="primary" endIcon={ <OpenInNewIcon /> }
-                                onClick={ onSelectCsvDestinationPath }>
-                          参照
+                        <Button variant="contained" size="small" color="primary" endIcon={ <OpenInNewIcon /> }
+                                onClick={ onSelectCsvDestinationPathButton }>
+                          保存先を参照
                         </Button>
                       </ListItemSecondaryAction>
                     </ListItem>
@@ -448,11 +283,11 @@ const MainViewContent = () => {
                       <ListItemIcon>
                         <TheatersIcon />
                       </ListItemIcon>
-                      <ListItemText primary="キャプチャの保存先" secondary={ captureDestinationPath } />
+                      <ListItemText primary="画面キャプチャ" secondary={ captureDestinationPath } />
                       <ListItemSecondaryAction>
-                        <Button variant="contained" color="primary" endIcon={ <OpenInNewIcon /> }
-                                onClick={ onSelectCaptureDestinationPath }>
-                          参照
+                        <Button variant="contained" size="small" color="primary" endIcon={ <OpenInNewIcon /> }
+                                onClick={ onSelectCaptureDestinationPathButton }>
+                          保存先を参照
                         </Button>
                       </ListItemSecondaryAction>
                     </ListItem>
@@ -460,7 +295,7 @@ const MainViewContent = () => {
                 </AccordionDetails>
                 <AccordionActions className={ classes.setupAccordionActions }>
                   <ButtonGroup variant="contained" color="primary">
-                    <Button onClick={ onOpenBrowserButton }
+                    <Button onClick={ onOpenViewerButton }
                             disabled={ buttonState === 1 ? false : true }>ブラウザを開く</Button>
                     <Button onClick={ onStartButton }
                             disabled={ buttonState === 2 ? false : true }>計測開始</Button>
@@ -475,7 +310,7 @@ const MainViewContent = () => {
                 <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
                                   aria-controls="debug-table-panel-content"
                                   id="debug-table-panel-header">
-                  <Typography className={ classes.debugTableHeading } component="h2">注視要素</Typography>
+                  <Typography className={ classes.heading } component="h2">注視要素のプレビュー</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   <TableContainer>
@@ -484,8 +319,7 @@ const MainViewContent = () => {
                       <TableHead>
                         <TableRow>
                           <TableCell ></TableCell>
-                          <TableCell align="center">Main</TableCell>
-                          <TableCell align="center">Parent</TableCell>
+                          <TableCell align="center">Leaf Side Element (1)</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -499,35 +333,21 @@ const MainViewContent = () => {
                         <TableRow>
                           <TableCell component="th">
                             <LayersIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Overlap (All)
+                            Element Overlap (All)
                           </TableCell>
                           <TableCell align="center" colSpan={ 2 }
-                                     style={ { color: (elemPathAll === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { elemPathAll }
+                                     style={ { color: (elemOverlapAll === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
+                            { elemOverlapAll }
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell component="th">
                             <LayersIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Overlap (Filtered)
+                            Element Overlap (Filtered)
                           </TableCell>
                           <TableCell align="center" colSpan={ 2 }
-                                     style={ { color: (elemPath === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { elemPath }
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell component="th">
-                            <SearchIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Filtered target or not
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (domIsTarget === "not" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { domIsTarget }
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (parentDomIsTarget === "not" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { parentDomIsTarget }
+                                     style={ { color: (elemOverlapFiltered === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
+                            { elemOverlapFiltered }
                           </TableCell>
                         </TableRow>
                         <TableRow>
@@ -536,54 +356,8 @@ const MainViewContent = () => {
                             Tag
                           </TableCell>
                           <TableCell align="center"
-                                     style={ { color: (domTagName === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
+                                     style={ { color: (domTagName === "<none>" ) ? CustomColorPalette.ExtraDarkGrey : CustomColorPalette.Black } }>
                             { domTagName }
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (parentDomTagName === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { parentDomTagName }
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell component="th">
-                            <CodeIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Role
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (domRole === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { domRole }
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (parentDomRole === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { parentDomRole }
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell component="th">
-                            <CropFreeIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            ID
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (domId === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { domId }
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (parentDomId === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { parentDomId }
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell component="th">
-                            <LabelIcon className={ classes.debugTableIcon } fontSize="small"/>
-                            Label
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (domAriaLabel === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { domAriaLabel }
-                          </TableCell>
-                          <TableCell align="center"
-                                     style={ { color: (parentDomAriaLabel === "<none>" ) ? SystemColor.ExtraDarkGrey : SystemColor.Black } }>
-                            { parentDomAriaLabel }
                           </TableCell>
                         </TableRow>
                       </TableBody>
@@ -593,17 +367,21 @@ const MainViewContent = () => {
               </Accordion>
             </Grid>
           </Grid>
+          { /* Configs Dialog */ }
+          <ConfigsView open={ isConfigsDialogOpen } onClose={ onCloseConfigsDialogButton } />
         </div>
     );
 };
 
 const MainView = () => {
     return (
-        <ThemeProvider theme={ customTheme }>
-          <SnackbarProvider maxSnack={ 3 }>
-            <MainViewContent />
-          </SnackbarProvider>
-        </ThemeProvider>
+        <ConfigsProvider>
+          <ThemeProvider theme={ CustomTheme }>
+            <SnackbarProvider maxSnack={ 3 }>
+              <MainViewContent />
+            </SnackbarProvider>
+          </ThemeProvider>
+        </ConfigsProvider>
     );
 }
 
