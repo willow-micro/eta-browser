@@ -148,6 +148,13 @@ const useStyles = makeStyles((theme) => ({
         marginRight: theme.spacing( 4 ),
         marginBottom: theme.spacing( 0 ),
         marginLeft: theme.spacing( 4 )
+    },
+    // Checkboxes Container
+    checkboxesContainer: {
+        marginTop: theme.spacing( 0 ),
+        marginRight: theme.spacing( 6 ),
+        marginBottom: theme.spacing( 0 ),
+        marginLeft: theme.spacing( 6 )
     }
 }));
 

@@ -7,10 +7,12 @@ import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, S
 import { Chip, Slider } from '@material-ui/core';
 import { Accordion, AccordionSummary, AccordionDetails, AccordionActions, Divider } from '@material-ui/core';
 import { IconButton, Button, TextField } from '@material-ui/core';
+import { FormGroup, FormControlLabel, Checkbox } from '@material-ui/core';
 import CancelIcon from '@material-ui/icons/Cancel';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
+import CheckBoxIcon from '@material-ui/icons/CheckBox';
 
 // User
 import { CustomColorPalette, useStyles } from './ConfigsViewStyles';
@@ -165,12 +167,7 @@ const ConfigsView = (props) => {
                 leaf: adoptRange[0],
                 root: adoptRange[1]
             },
-            generalDataCollection: {
-                timestamp:　true, // Always true
-                coordinates: true,
-                overlapAll: true,
-                overlapFiltered: true
-            },
+            generalDataCollection: generalDataCollection,
             elementDataCollection: {
                 tagName: true, // Always true
                 attributes: collectAttributesArray
@@ -287,6 +284,9 @@ const ConfigsView = (props) => {
             return;
         }
         setIsNewCollectAttributeValid(true);
+    };
+    const onGeneralDataCollectionCheckboxesChange = (event) => {
+        setGeneralDataCollection({ ...generalDataCollection, [event.target.name]: event.target.checked });
     };
 
     const onLeafAdoptSliderChange = (event, newValue) => {
@@ -436,14 +436,34 @@ const ConfigsView = (props) => {
                 <Grid item xs={ 12 }>
                   <Accordion defaultExpanded={ true }>
                     <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
-                                      aria-controls="configs-panel-2-content"
-                                      id="configs-panel-2-header">
-                      <Typography className={ classes.heading } component="h2">対象から収集するデータ</Typography>
+        aria-controls="configs-panel-2-content"
+        id="configs-panel-2-header">
+        <Typography className={ classes.heading } component="h2">対象から収集するデータ</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                       <Grid container spacing={ 2 }>
                         <Grid item xs={ 12 }>
                           <Typography className={ classes.subheading } component="h3">全般</Typography>
+                        </Grid>
+                        <Grid item xs={ 12 }>
+                          <FormGroup row className={ classes.checkboxesContainer }>
+                            <FormControlLabel disabled
+                                              control={ <Checkbox name="timestamp" size="small"
+                                                                  checked /> }
+                                              label="Timestamp" />
+                            <FormControlLabel control={ <Checkbox name="coordinates" size="small"
+                                                                  checked={ generalDataCollection ? generalDataCollection.coordinates : false }
+                                                                  onChange={ onGeneralDataCollectionCheckboxesChange } /> }
+                                              label="Coordinates" />
+                            <FormControlLabel control={ <Checkbox name="overlapAll" size="small"
+                                                                  checked={ generalDataCollection ? generalDataCollection.overlapAll : false }
+                                                                  onChange={ onGeneralDataCollectionCheckboxesChange } /> }
+                                              label="Overlap(All)" />
+                            <FormControlLabel control={ <Checkbox name="overlapFiltered" size="small"
+                                                                  checked={ generalDataCollection ? generalDataCollection.overlapFiltered : false }
+                                                                  onChange={ onGeneralDataCollectionCheckboxesChange } /> }
+                                              label="Overlap(Filtered)" />
+                          </FormGroup>
                         </Grid>
                         <Grid item xs={ 12 }>
                           <Typography className={ classes.subheading } component="h3">要素から取得するデータ</Typography>
@@ -454,7 +474,7 @@ const ConfigsView = (props) => {
                                   return (
                                       <li key={ data.key }>
                                         <Chip className={ classes.chip } color="default" size="small"
-                                              label={ data.label }
+                                              label={ data.label } disabled={ (data.label === "tagName" ) ? true : false }
                                               onDelete={ (data.label === "tagName" ) ? undefined : onDeleteCollectAttributeChip(data) } />
                                       </li>
                                   );
@@ -484,28 +504,28 @@ const ConfigsView = (props) => {
                       </Grid>
                     </AccordionDetails>
                   </Accordion>
-                </Grid>
               </Grid>
-            </div>
-            <Dialog open={ isAdoptRangeHelpDialogOpen } onClose={ onCloseAdoptRangeHelpDialog }
-                    TransitionComponent={ DialogTransition } keepMounted
-                    aria-labelledby="adopt-range-help-dialog-title"
-                    aria-describedby="adopt-range-help-dialog-description">
-              <DialogTitle id="adopt-range-help-dialog-title">
-                データ収集の対象となる要素の階層について
-              </DialogTitle>
-              <DialogContent>
-                <DialogContentText id="adopt-range-help-dialog-description">
-                  指定した階層まで要素が存在しない場合には、要素から取得したデータは空となります。<br/>
-                  また、子要素側で指定した階層の要素と、親要素側で指定した階層の要素が重複した場合には、双方に同じデータが記録されます。
-                </DialogContentText>
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={ onCloseAdoptRangeHelpDialog } color="primary">
-                  OK
-                </Button>
-              </DialogActions>
-            </Dialog>
+              </Grid>
+          </div>
+          <Dialog open={ isAdoptRangeHelpDialogOpen } onClose={ onCloseAdoptRangeHelpDialog }
+                  TransitionComponent={ DialogTransition } keepMounted
+                  aria-labelledby="adopt-range-help-dialog-title"
+                  aria-describedby="adopt-range-help-dialog-description">
+            <DialogTitle id="adopt-range-help-dialog-title">
+              データ収集の対象となる要素の階層について
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText id="adopt-range-help-dialog-description">
+                指定した階層まで要素が存在しない場合には、要素から取得したデータは空となります。<br/>
+                また、子要素側で指定した階層の要素と、親要素側で指定した階層の要素が重複した場合には、双方に同じデータが記録されます。
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={ onCloseAdoptRangeHelpDialog } color="primary">
+                OK
+              </Button>
+            </DialogActions>
+          </Dialog>
           </div>
         </Dialog>
     );
