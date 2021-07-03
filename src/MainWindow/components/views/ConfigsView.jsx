@@ -58,7 +58,6 @@ const rootAdoptSliderMarks = [
         label: "親要素→"
     }
 ];
-
 const getLeafAdoptSliderValueText = (value) => {
     if (value <= 0) {
         return "なし";
@@ -83,12 +82,14 @@ const ConfigsView = (props) => {
     const [ filterAttributes, setFilterAttributes ] = useState(null);
     const [ adoptRange, setAdoptRange ] = useState(null);
     const [ generalDataCollection, setGeneralDataCollection ] = useState(null);
-    const [ elementDataCollection, setElementDataCollection ] = useState(null);
+    const [ collectAttributes, setCollectAttributes ] = useState(null);
     // Input
     const [newFilterTagName, setNewFilterTagName] = useState("");
     const [isNewFilterTagNameValid, setIsNewFilterTagNameValid] = useState(true);
-    const [newFilterAttributes, setNewFilterAttributes] = useState("");
-    const [isNewFilterAttributesValid, setIsNewFilterAttributesValid] = useState(true);
+    const [newFilterAttribute, setNewFilterAttribute] = useState("");
+    const [isNewFilterAttributeValid, setIsNewFilterAttributeValid] = useState(true);
+    const [newCollectAttribute, setNewCollectAttribute] = useState("");
+    const [isNewCollectAttributeValid, setIsNewCollectAttributeValid] = useState(true);
 
 
     // React Hooks Context
@@ -101,30 +102,43 @@ const ConfigsView = (props) => {
     useEffect(() => {
         setIsDialogOpen(props.open);
         if (props.open) {
+            // Filter TagNames
             const filterTagNamesForChips = [];
             for (let i = 0; i < configs.filterTagNames.length; i++) {
                 filterTagNamesForChips.push({ key: i, label: configs.filterTagNames[i] });
             }
             setFilterTagNames(filterTagNamesForChips);
+            // Filter Attributes
             const filterAttributesForChips = [];
             for (let i = 0; i < configs.filterAttributes.length; i++) {
                 filterAttributesForChips.push({ key: i, label: configs.filterAttributes[i] });
             }
             setFilterAttributes(filterAttributesForChips);
+            // Adopt Range
             const adoptRangeForSlider = [configs.adoptRange.leaf, configs.adoptRange.root];
             setAdoptRange(adoptRangeForSlider);
+            // General Data Collection
             setGeneralDataCollection(configs.generalDataCollection);
-            setElementDataCollection(configs.elementDataCollection);
+            // Element Data Collectrion (Attributes)
+            const collectAttributesForChips = [];
+            collectAttributesForChips.push({ key: 0, label: "tagName" });
+            for (let i = 0; i < configs.elementDataCollection.attributes.length; i++) {
+                collectAttributesForChips.push({ key: i + 1, label: configs.elementDataCollection.attributes[i] });
+            }
+            setCollectAttributes(collectAttributesForChips);
         }
     }, [props.open]);
 
 
     // React Event onDeletes
-    const onDeleteFilterTagNamesChip = (chipToDelete) => () => {
+    const onDeleteFilterTagNameChip = (chipToDelete) => () => {
         setFilterTagNames((chips) => chips.filter((chip) => chip.key !== chipToDelete.key));
     };
-    const onDeleteFilterAttributesChip = (chipToDelete) => () => {
+    const onDeleteFilterAttributeChip = (chipToDelete) => () => {
         setFilterAttributes((chips) => chips.filter((chip) => chip.key !== chipToDelete.key));
+    };
+    const onDeleteCollectAttributeChip = (chipToDelete) => () => {
+        setCollectAttributes((chips) => chips.filter((chip) => chip.key !== chipToDelete.key));
     };
 
     // React Event onClicks
@@ -137,6 +151,10 @@ const ConfigsView = (props) => {
         for (let i = 0; i < filterAttributes.length; i++) {
             filterAttributesArray.push(filterAttributes[i].label);
         }
+        const collectAttributesArray = [];
+        for (let i = 1; i < collectAttributes.length; i++) {
+            collectAttributesArray.push(collectAttributes[i].label);
+        }
         setConfigs({
             // Initial Configs
             filterTagNames: filterTagNamesArray,
@@ -146,13 +164,14 @@ const ConfigsView = (props) => {
                 root: adoptRange[1]
             },
             generalDataCollection: {
+                timestamp:　true, // Always true
                 coordinates: true,
                 overlapAll: true,
                 overlapFiltered: true
             },
             elementDataCollection: {
-                tagName: true,
-                attributes: ["id", "role", "aria-label"]
+                tagName: true, // Always true
+                attributes: collectAttributesArray
             }
         });
         props.onClose();
@@ -164,12 +183,19 @@ const ConfigsView = (props) => {
         setNewFilterTagName("");
         setIsNewFilterTagNameValid(true);
     };
-    const onAddNewFilterAttributes = () => {
-        if (isNewFilterAttributesValid) {
-            setFilterAttributes([...filterAttributes, { key: filterAttributes.length, label: newFilterAttributes }]);
+    const onAddNewFilterAttribute = () => {
+        if (isNewFilterAttributeValid) {
+            setFilterAttributes([...filterAttributes, { key: filterAttributes.length, label: newFilterAttribute }]);
         }
-        setNewFilterAttributes("");
-        setIsNewFilterAttributesValid(true);
+        setNewFilterAttribute("");
+        setIsNewFilterAttributeValid(true);
+    };
+    const onAddNewCollectAttribute = () => {
+        if (isNewCollectAttributeValid) {
+            setCollectAttributes([...collectAttributes, { key: collectAttributes.length, label: newCollectAttribute }]);
+        }
+        setNewCollectAttribute("");
+        setIsNewCollectAttributeValid(true);
     };
 
     // React Event onChanges
@@ -200,33 +226,61 @@ const ConfigsView = (props) => {
         }
         setIsNewFilterTagNameValid(true);
     };
-    const onNewFilterAttributesChange = (event) => {
+    const onNewFilterAttributeChange = (event) => {
         const name = event.target.value;
-        setNewFilterAttributes(name);
+        setNewFilterAttribute(name);
         // If Name Has Space(s)
         if (name.indexOf(' ') >= 0) {
-            setIsNewFilterAttributesValid(false);
+            setIsNewFilterAttributeValid(false);
             return;
         }
         // If Exists
         for (let i = 0; i < filterAttributes.length; i++) {
             if (filterAttributes[i].label === name) {
-                setIsNewFilterAttributesValid(false);
+                setIsNewFilterAttributeValid(false);
                 return;
             }
         }
         // If Not Alphabet or Numbers
         if (/^[a-zA-Z0-9-]*$/.test(name) === false) {
-            setIsNewFilterAttributesValid(false);
+            setIsNewFilterAttributeValid(false);
             return;
         }
         // If Starts with a Number
         if (/^[0-9][a-zA-Z0-9-]*$/.test(name) === true) {
-            setIsNewFilterAttributesValid(false);
+            setIsNewFilterAttributeValid(false);
             return;
         }
-        setIsNewFilterAttributesValid(true);
+        setIsNewFilterAttributeValid(true);
     };
+    const onNewCollectAttributeChange = (event) => {
+        const name = event.target.value;
+        setNewCollectAttribute(name);
+        // If Name Has Space(s)
+        if (name.indexOf(' ') >= 0) {
+            setIsNewCollectAttributeValid(false);
+            return;
+        }
+        // If Exists
+        for (let i = 0; i < collectAttributes.length; i++) {
+            if (collectAttributes[i].label === name) {
+                setIsNewCollectAttributeValid(false);
+                return;
+            }
+        }
+        // If Not Alphabet or Numbers
+        if (/^[a-zA-Z0-9-]*$/.test(name) === false) {
+            setIsNewCollectAttributeValid(false);
+            return;
+        }
+        // If Starts with a Number
+        if (/^[0-9][a-zA-Z0-9-]*$/.test(name) === true) {
+            setIsNewCollectAttributeValid(false);
+            return;
+        }
+        setIsNewCollectAttributeValid(true);
+    };
+
     const onLeafAdoptSliderChange = (event, newValue) => {
         setAdoptRange([newValue, adoptRange[1]]);
     };
@@ -265,7 +319,7 @@ const ConfigsView = (props) => {
                     <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
                                       aria-controls="configs-panel-1-content"
                                       id="configs-panel-1-header">
-                      <Typography className={ classes.heading } component="h2">データ収集の対象となる要素</Typography>
+                      <Typography className={ classes.heading } component="h2">データ収集の対象</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                       <Grid container spacing={ 2 }>
@@ -279,7 +333,7 @@ const ConfigsView = (props) => {
                                       <li key={ data.key }>
                                         <Chip className={ classes.chip } color="default" size="small"
                                               label={ data.label }
-                                              onDelete={ onDeleteFilterTagNamesChip(data) } />
+                                              onDelete={ onDeleteFilterTagNameChip(data) } />
                                       </li>
                                   );
                             }) }
@@ -315,7 +369,7 @@ const ConfigsView = (props) => {
                                       <li key={ data.key }>
                                         <Chip className={ classes.chip } color="default" size="small"
                                               label={ data.label }
-                                              onDelete={ onDeleteFilterAttributesChip(data) } />
+                                              onDelete={ onDeleteFilterAttributeChip(data) } />
                                       </li>
                                   );
                             }) }
@@ -325,18 +379,18 @@ const ConfigsView = (props) => {
                           <div className={ classes.newChipContainer }>
                             <TextField className={ classes.newChipTextfield } variant="outlined" size="small"
                                        label="属性を追加"
-                                       name="newFilterAttributesTextfield"
-                                       helperText={ !isNewFilterAttributesValid && "属性名が不正です" }
-                                       value={ newFilterAttributes }
-                                       onChange={ onNewFilterAttributesChange }
-                                       error={ !isNewFilterAttributesValid }
+                                       name="newFilterAttributeTextfield"
+                                       helperText={ !isNewFilterAttributeValid && "属性名が不正です" }
+                                       value={ newFilterAttribute }
+                                       onChange={ onNewFilterAttributeChange }
+                                       error={ !isNewFilterAttributeValid }
                                        onKeyDown={ (e) => {
                                            // Enter key
                                            if (e.keyCode === 13) {
-                                               onAddNewFilterAttributes();
+                                               onAddNewFilterAttribute();
                                            } } } />
                             <Button className={ classes.newChipButton } variant="contained" color="default" size="small"
-                                    onClick={ onAddNewFilterAttributes }>
+                                    onClick={ onAddNewFilterAttribute }>
                               追加
                             </Button>
                           </div>
@@ -369,7 +423,7 @@ const ConfigsView = (props) => {
                     <AccordionSummary expandIcon={ <ExpandMoreIcon /> }
                                       aria-controls="configs-panel-2-content"
                                       id="configs-panel-2-header">
-                      <Typography className={ classes.heading } component="h2">要素から収集するデータ</Typography>
+                      <Typography className={ classes.heading } component="h2">対象から収集するデータ</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                       <Grid container spacing={ 2 }>
@@ -377,7 +431,40 @@ const ConfigsView = (props) => {
                           <Typography className={ classes.subheading } component="h3">全般</Typography>
                         </Grid>
                         <Grid item xs={ 12 }>
-                          <Typography className={ classes.subheading } component="h3">要素ごとのデータ</Typography>
+                          <Typography className={ classes.subheading } component="h3">要素から取得するデータ</Typography>
+                        </Grid>
+                        <Grid item xs={ 12 }>
+                          <ul className={ classes.chipsContainer }>
+                            { collectAttributes && collectAttributes.map((data) => {
+                                  return (
+                                      <li key={ data.key }>
+                                        <Chip className={ classes.chip } color="default" size="small"
+                                              label={ data.label }
+                                              onDelete={ (data.label === "tagName" ) ? undefined : onDeleteCollectAttributeChip(data) } />
+                                      </li>
+                                  );
+                            }) }
+                          </ul>
+                        </Grid>
+                        <Grid item xs={ 12 }>
+                          <div className={ classes.newChipContainer }>
+                            <TextField className={ classes.newChipTextfield } variant="outlined" size="small"
+                                       label="属性を追加"
+                                       name="newCollectAttributeTextfield"
+                                       helperText={ !isNewCollectAttributeValid && "属性名が不正です" }
+                                       value={ newCollectAttribute }
+                                       onChange={ onNewCollectAttributeChange }
+                                       error={ !isNewCollectAttributeValid }
+                                       onKeyDown={ (e) => {
+                                           // Enter key
+                                           if (e.keyCode === 13) {
+                                               onAddNewCollectAttribute();
+                                           } } } />
+                            <Button className={ classes.newChipButton } variant="contained" color="default" size="small"
+                                    onClick={ onAddNewCollectAttribute }>
+                              追加
+                            </Button>
+                          </div>
                         </Grid>
                       </Grid>
                     </AccordionDetails>

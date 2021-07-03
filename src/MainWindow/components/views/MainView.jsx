@@ -294,7 +294,7 @@ const MainViewContent = () => {
                       <ListItemText primary="URL" />
                       <ListItemSecondaryAction>
                         <TextField className={ classes.textfield } variant="outlined" size="small"
-                                   name="browserURLField" label="対象コンテンツ"
+                                   name="browserURLField" label="コンテンツ"
                                    helperText={ !isBrowserURLValid && "URLが不正です" }
                                    value={ browserURL }
                                    onChange={ onBrowserURLChange }

@@ -22,12 +22,13 @@ const ConfigsProvider = ({ children }) => {
             root: 1
         },
         generalDataCollection: {
+            timestamp: true,  // Always true
             coordinates: true,
             overlapAll: true,
             overlapFiltered: true
         },
         elementDataCollection: {
-            tagName: true,
+            tagName: true, // Always true
             attributes: ["id", "role", "aria-label"]
         }
     });
