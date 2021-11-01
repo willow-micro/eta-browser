@@ -64,8 +64,8 @@ const createWindow = () => {
     mainWindow.webContents.openDevTools();
 
     // Initialize a websocket instance
-    //websocket = new ws.WebSocket("ws://mbp2015-bootcamp.local:8008/EyeData", {
-    websocket = new ws.WebSocket("ws://localhost:8008", {
+    websocket = new ws.WebSocket("ws://mbp2015-bootcamp.local:8008/EyeTracker", {
+    //websocket = new ws.WebSocket("ws://localhost:8008", {
         perMessageDeflate: false
     });
     websocket.on("open", () => {
