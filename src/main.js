@@ -6,6 +6,7 @@ const { electron, app, BrowserWindow, ipcMain, Menu, dialog } = require('electro
 const path = require('path');
 const fs = require('fs');
 const { format } = require('@fast-csv/format');
+const ws = require('ws');
 // User
 const menuTemplate = require('./MenuTemplate.js');
 const Timekeeper = require('./Timekeeper.js');
@@ -31,6 +32,9 @@ let csvDestinationPath = "";
 let captureSaveStream = null;
 let captureDestinationPath = "";
 let isCaptureSaveStreamActive = false;
+
+// WebSocket instance
+let websocket = null;
 
 // Create the main window
 const createWindow = () => {
@@ -59,9 +63,27 @@ const createWindow = () => {
     // Open the DevTools.
     mainWindow.webContents.openDevTools();
 
+    // Initialize a websocket instance
+    websocket = new ws.WebSocket("ws://mbp2015-bootcamp.local:8008/EyeTracker", {
+        perMessageDeflate: false
+    });
+    websocket.on("open", () => {
+        console.log("connected to ws server");
+        mainWindow.webContents.send("AppMessage", {
+            message: "Ready for Receiving Eye Data",
+            type: "info"
+        });
+    });
+    websocket.on("message", (msg) => {
+        console.log("received from ws server:");
+        console.log(msg.toString());
+        console.log("t:" + Date.now());
+    });
+
     // When the main window is closed, back it to a null object.
     mainWindow.on('closed', function() {
         mainWindow = null;
+        websocket = null;
     });
 };
 
