@@ -40,7 +40,7 @@ const MainViewContent = () => {
     const [appMessage, setAppMessage] = useState("起動しました");
     const [appMessageType, setAppMessageType] = useState("success");
     // Viewer Destination URL
-    const [browserURL, setBrowserURL] = useState("file:///Users/kawa/Wakayama/2021/HCDLab/sample/eta-sample-menu/build/index.html");
+    const [browserURL, setBrowserURL] = useState("file:///Users/noka/Workspace/Node/eta-sample-menu/build/index.html");
     const [isBrowserURLValid, setIsBrowserURLValid] = useState(true);
     // CSV Destination Path
     const [csvDestinationPath, setCsvDestinationPath] = useState("");

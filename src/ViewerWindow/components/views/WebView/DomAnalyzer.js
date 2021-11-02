@@ -20,13 +20,19 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(configs);
     });
     ipcRenderer.on("GazeDataFromViewerToWebView", (event, arg) => {
-        console.log("Received Gaze Data: " + arg.data);
+        // console.log("Received Gaze Data");
+        // console.log("screenX: " + arg.screenX);
+        // console.log("screenY: " + arg.screenY);
+        const viewerX = arg.screenX - window.screenX;
+        const viewerY = arg.screenY - window.screenY;
+        console.log("viewerX: " + viewerX);
+        console.log("viewerY: " + viewerY);
+        accessDom(viewerX, viewerY);
     });
 });
 
-// Mousemove event
-// Debounce with 150ms
-document.addEventListener('mousemove', debounce(150, false, (event) => {
+// Access DOM
+function accessDom(xPos, yPos) {
     // If configs are null, skip it
     if (!configs) {
         console.log("no configs");
@@ -35,7 +41,7 @@ document.addEventListener('mousemove', debounce(150, false, (event) => {
     console.log("moved");
 
     // Get Elements (Array): Deeper Elements First
-    const elements = document.elementsFromPoint(event.clientX, event.clientY);
+    const elements = document.elementsFromPoint(xPos, yPos);
 
     // Filtering Elements with configs
     const filteredElements = elements.filter(element => {
@@ -57,8 +63,8 @@ document.addEventListener('mousemove', debounce(150, false, (event) => {
     let coordinates = null;
     if (configs.generalDataCollection.coordinates) {
         coordinates = {
-            x: event.clientX,
-            y: event.clientY
+            x: xPos,
+            y: yPos
         };
     }
     // Element Overlap (All)
@@ -128,6 +134,8 @@ document.addEventListener('mousemove', debounce(150, false, (event) => {
         }
     }
 
+    console.log(leafSideElementData[0]["tagName"]);
+
     // Send DOM Data
     ipcRenderer.sendToHost("DOMDataFromWebViewToViewer", {
         coordinates: coordinates,
@@ -136,4 +144,10 @@ document.addEventListener('mousemove', debounce(150, false, (event) => {
         leafSideElementData: leafSideElementData,
         rootSideElementData: rootSideElementData
     });
-}));
+}
+
+// Mousemove event
+// Debounce with 150ms
+// document.addEventListener('mousemove', debounce(150, false, (event) => {
+//     accessDom(event.clientX, event.clientY);
+// }));
