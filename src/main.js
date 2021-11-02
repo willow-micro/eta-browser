@@ -65,19 +65,19 @@ const createWindow = () => {
 
     // Initialize a websocket instance
     websocket = new ws.WebSocket("ws://mbp2015-bootcamp.local:8008/EyeTracker", {
-    //websocket = new ws.WebSocket("ws://localhost:8008", {
         perMessageDeflate: false
     });
     websocket.on("open", () => {
         console.log("connected to ws server");
-    })
-    websocket.on("message", (msg) => {
-        console.log("received from ws server:");
-        console.log(msg);
         mainWindow.webContents.send("AppMessage", {
-            message: msg.toString(),
+            message: "Ready for Receiving Eye Data",
             type: "info"
         });
+    });
+    websocket.on("message", (msg) => {
+        console.log("received from ws server:");
+        console.log(msg.toString());
+        console.log("t:" + Date.now());
     });
 
     // When the main window is closed, back it to a null object.
