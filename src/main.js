@@ -12,6 +12,7 @@ const menuTemplate = require('./MenuTemplate.js');
 const Timekeeper = require('./Timekeeper.js');
 let isRecording = false;
 let configs = null;
+let isViewerAvailable = false;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -75,9 +76,24 @@ const createWindow = () => {
         });
     });
     websocket.on("message", (msg) => {
+        const messageStr = msg.toString();
         console.log("received from ws server:");
-        console.log(msg.toString());
-        console.log("t:" + Date.now());
+        console.log(messageStr);
+        console.log("t" + Date.now());
+
+        if (isViewerAvailable) {
+            const screenXStr = messageStr.substring(
+                messageStr.indexOf("x") + 1,
+                messageStr.lastIndexOf("y")
+            );
+            const screenYStr = messageStr.substring(
+                messageStr.indexOf("y") + 1
+            );
+            viewerWindow.webContents.send("GazeDataFromMainToViewer", {
+                screenX: parseInt(screenXStr, 10),
+                screenY: parseInt(screenYStr, 10)
+            });
+        }
     });
 
     // When the main window is closed, back it to a null object.
@@ -150,6 +166,7 @@ ipcMain.on("OpenViewer", (event, arg) => {
             captureSaveStream.end();
             captureSaveStream = null;
         }
+        isViewerAvailable = false;
     });
 
     // Send Destination URL when the viewer window is ready
@@ -162,6 +179,7 @@ ipcMain.on("OpenViewer", (event, arg) => {
             message: "コンテンツを開きました",
             type: "info"
         });
+        isViewerAvailable = true;
     });
 
     configs = arg.configs;
