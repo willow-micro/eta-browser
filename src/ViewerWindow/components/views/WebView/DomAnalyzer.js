@@ -20,19 +20,18 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(configs);
     });
     ipcRenderer.on("GazeDataFromViewerToWebView", (event, arg) => {
-        // console.log("Received Gaze Data");
-        // console.log("screenX: " + arg.screenX);
-        // console.log("screenY: " + arg.screenY);
-        const viewerX = arg.screenX - window.screenX;
-        const viewerY = arg.screenY - window.screenY;
-        console.log("viewerX: " + viewerX);
-        console.log("viewerY: " + viewerY);
-        accessDom(viewerX, viewerY);
+        console.log("Received Gaze Data");
+        console.log(arg);
+        // const viewerX = arg.screenX - window.screenX;
+        // const viewerY = arg.screenY - window.screenY;
+        // console.log("viewerX: " + viewerX);
+        // console.log("viewerY: " + viewerY);
+        // sendDomDataAt(viewerX, viewerY);
     });
 });
 
-// Access DOM
-function accessDom(xPos, yPos) {
+// Get DOM data and Send it
+function sendDomDataAt(xPos, yPos) {
     // If configs are null, skip it
     if (!configs) {
         console.log("no configs");

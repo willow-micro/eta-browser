@@ -77,22 +77,40 @@ const createWindow = () => {
     });
     websocket.on("message", (msg) => {
         const messageStr = msg.toString();
+
+        const messageArray = messageStr.split(",");
+
+        // Debug
         console.log("received from ws server:");
-        console.log(messageStr);
-        console.log("t" + Date.now());
+        console.log(messageArray); // Content
+        console.log("CurrentUnixTime: " + Date.now()); // UnixTime (Electron)
+
+        const dataCount = parseInt(messageArray[0].substring(1), 10);
+        console.log("DataCount4Majority: " + dataCount);
+
+        const parsedData = messageArray.slice(1).map(dataString => {
+            const unixTimeStr = dataString.substring(
+                dataString.indexOf("t") + 1,
+                dataString.indexOf("x")
+            );
+            const screenXStr = dataString.substring(
+                dataString.indexOf("x") + 1,
+                dataString.indexOf("y")
+            );
+            const screenYStr = dataString.substring(
+                dataString.indexOf("y") + 1
+            );
+
+            return {
+                time: parseInt(unixTimeStr, 10),
+                x: parseInt(screenXStr, 10),
+                y: parseInt(screenYStr, 10)
+            };
+        });
 
         if (isViewerAvailable) {
-            const screenXStr = messageStr.substring(
-                messageStr.indexOf("x") + 1,
-                messageStr.lastIndexOf("y")
-            );
-            const screenYStr = messageStr.substring(
-                messageStr.indexOf("y") + 1
-            );
-            viewerWindow.webContents.send("GazeDataFromMainToViewer", {
-                screenX: parseInt(screenXStr, 10),
-                screenY: parseInt(screenYStr, 10)
-            });
+            viewerWindow.webContents.send("GazeDataFromMainToViewer",
+                                          parsedData);
         }
     });
 
