@@ -109,8 +109,7 @@ const createWindow = () => {
         });
 
         if (isViewerAvailable) {
-            viewerWindow.webContents.send("GazeDataFromMainToViewer",
-                                          parsedData);
+            viewerWindow.webContents.send("GazeDataFromMainToViewer", parsedData);
         }
     });
 

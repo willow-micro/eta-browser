@@ -9,6 +9,7 @@
 
 const { ipcRenderer } = require('electron');
 const { debounce } = require('throttle-debounce');
+const getXPath = require('get-xpath');
 
 let configs = null;
 
@@ -22,23 +23,51 @@ document.addEventListener('DOMContentLoaded', function () {
     ipcRenderer.on("GazeDataFromViewerToWebView", (event, arg) => {
         console.log("Received Gaze Data");
         console.log(arg);
-        // const viewerX = arg.screenX - window.screenX;
-        // const viewerY = arg.screenY - window.screenY;
-        // console.log("viewerX: " + viewerX);
-        // console.log("viewerY: " + viewerY);
-        // sendDomDataAt(viewerX, viewerY);
+        const dataCount = arg.length;
+        const xPathList = arg.map(data => {
+            const viewerX = data.x - window.screenX;
+            const viewerY = data.y - window.screenY;
+            const element = document.elementsFromPoint(viewerX, viewerY)[0];
+            if (element != null && element != undefined) {
+                return getXPath(element);
+            } else {
+                return "";
+            }
+        });
+        console.log(xPathList);
+        const majorityXPath = getMajorityElement(xPathList);
+        const majorityDataIndex = xPathList.indexOf(majorityXPath);
+        console.log("Majority: " + majorityDataIndex + " (" + majorityXPath + ")");
+
+        // If configs are available, send dom data
+        if (configs && majorityXPath !== "") {
+            const targetViewerX = arg[majorityDataIndex].x - window.screenX;
+            const targetViewerY = arg[majorityDataIndex].y - window.screenY;
+            sendDomDataAt(targetViewerX, targetViewerY);
+        }
     });
 });
 
+// Get the majority element from an array
+// Using Boyer–Moore majority vote algorithm
+function getMajorityElement(list) {
+    let candidate = null;
+    let count = 0;
+    list.forEach((element, index) => {
+        if (count === 0) {
+            candidate = element;
+        }
+        if (element === candidate) {
+            count++;
+        } else {
+            count--;
+        }
+    });
+    return candidate;
+}
+
 // Get DOM data and Send it
 function sendDomDataAt(xPos, yPos) {
-    // If configs are null, skip it
-    if (!configs) {
-        console.log("no configs");
-        return;
-    }
-    console.log("moved");
-
     // Get Elements (Array): Deeper Elements First
     const elements = document.elementsFromPoint(xPos, yPos);
 
