@@ -1,6 +1,14 @@
-// System
+// -*- coding: utf-8-unix -*-
+// ETA-Browser
+// MainWindow Main View
+
+///////////////////////////////////////////////////////////////////////////////
+//                                   Import                                  //
+///////////////////////////////////////////////////////////////////////////////
+// System /////////////////////////////////////////////////////////////////////
+// React
 import React, { useState, useEffect } from 'react';
-//// Material-UI
+// Material-UI
 import { ThemeProvider } from '@material-ui/core/styles';
 import { AppBar, Toolbar, Grid, Paper, Typography, Tooltip } from '@material-ui/core';
 import { List, ListItem, ListItemIcon, ListItemText, ListItemSecondaryAction, Divider } from '@material-ui/core';
@@ -19,16 +27,17 @@ import CodeIcon from '@material-ui/icons/Code';
 import LocationSearchingIcon from '@material-ui/icons/LocationSearching';
 import LayersIcon from '@material-ui/icons/Layers'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-////// Notistack
+// Notistack
 import { SnackbarProvider, useSnackbar } from 'notistack';
-
-// User
+// User ///////////////////////////////////////////////////////////////////////
 import { CustomColorPalette, CustomTheme, useStyles } from './MainViewStyles';
 import ConfigsView from './ConfigsView.jsx';
 import { ConfigsProvider, useConfigsContext } from '../../contexts/ConfigsContext.jsx';
 
 
-// Main Component
+///////////////////////////////////////////////////////////////////////////////
+//                               Main Component                              //
+///////////////////////////////////////////////////////////////////////////////
 const MainViewContent = () => {
     // React Hooks State
     // Configs Dialog
@@ -373,6 +382,9 @@ const MainViewContent = () => {
     );
 };
 
+///////////////////////////////////////////////////////////////////////////////
+//                               Real Component                              //
+///////////////////////////////////////////////////////////////////////////////
 const MainView = () => {
     return (
         <ConfigsProvider>
@@ -385,6 +397,9 @@ const MainView = () => {
     );
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//                                   Export                                  //
+///////////////////////////////////////////////////////////////////////////////
 // Function Componentは，宣言とは別途exportする必要がある．
 // 同時にexportすると，正しくトランスパイルされない．これは通常のconst定数も同様かと思われる
 export default MainView;
