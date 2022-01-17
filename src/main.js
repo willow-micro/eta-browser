@@ -27,6 +27,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 /// Global flags
 let isRecording = false;
 let isViewerAvailable = false;
+let isWebSocketConnected = false;
 /// Config data
 let configs = null;
 /// Make windows object visible from entire the main script
@@ -80,9 +81,6 @@ const createWindow = () => {
         mainWindow = null;
         websocket = null;
     });
-
-    // Debug: open websocket client
-    InitializeWSClient("ws://mbp2015-bootcamp.local:8008/SBET");
 };
 
 
@@ -153,12 +151,18 @@ ipcMain.on("OpenViewer", (event, arg) => {
             captureSaveStream = null;
         }
         isViewerAvailable = false;
+        // Close ws
+        if (websocket !== null) {
+            websocket.teminate();
+            websocket = null;
+            isWebSocketConnected = false;
+        }
     });
 
     // Send Destination URL when the viewer window is ready
     viewerWindow.webContents.once('dom-ready', () => {
         viewerWindow.webContents.send("InitializeViewerFromMain", {
-            url: arg.url,
+            url: arg.browserURL,
             configs: arg.configs
         });
         mainWindow.webContents.send("AppMessage", {
@@ -169,6 +173,11 @@ ipcMain.on("OpenViewer", (event, arg) => {
     });
 
     configs = arg.configs;
+
+    // Start ws client
+    console.log("StartWSClient: " + arg.webSocketURL);
+    // Open websocket client
+    InitializeWSClient(arg.webSocketURL);
 });
 
 // Open CSV path modal ////////////////////////////////////////////////////////
@@ -358,9 +367,18 @@ const InitializeWSClient = (path) => {
     websocket.on("open", () => {
         console.log("connected to ws server");
         mainWindow.webContents.send("AppMessage", {
-            message: "Connected with TobiiSBETServer",
+            message: "データサーバに接続しました",
             type: "info"
         });
+        isWebSocketConnected = true;
+    });
+    websocket.on("close", () => {
+        console.log("disconnected to ws server");
+        mainWindow.webContents.send("AppMessage", {
+            message: "データサーバを切断しました",
+            type: "info"
+        });
+        isWebSocketConnected = false;
     });
     websocket.on("message", (msg) => {
         const messageStr = msg.toString();

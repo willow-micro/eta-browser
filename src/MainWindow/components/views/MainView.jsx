@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from
 import { IconButton, ButtonGroup, Button, TextField } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
 import TuneIcon from '@material-ui/icons/Tune';
+import DnsIcon from '@material-ui/icons/Dns';
 import WebIcon from '@material-ui/icons/Web';
 import DescriptionIcon from '@material-ui/icons/Description';
 import TheatersIcon from '@material-ui/icons/Theaters';
@@ -48,6 +49,9 @@ const MainViewContent = () => {
     // App Message
     const [appMessage, setAppMessage] = useState("起動しました");
     const [appMessageType, setAppMessageType] = useState("success");
+    // WebSocket Server path
+    const [webSocketURL, setWebSocketURL] = useState("ws://mbp-2015.local:8008/SBET");
+    const [isWebSocketURLValid, setIsWebSocketURLValid] = useState(true);
     // Viewer Destination URL
     const [browserURL, setBrowserURL] = useState("file:///Users/noka/Workspace/Node/eta-sample-menu/build/index.html");
     const [isBrowserURLValid, setIsBrowserURLValid] = useState(true);
@@ -180,19 +184,31 @@ const MainViewContent = () => {
         window.api.send("RequestCaptureDestinationPath", {});
     };
     const onOpenViewerButton = () => {
-        if (isBrowserURLValid && browserURL.length > 0) {
-            console.log("OpenViewerButton");
-            window.api.send("OpenViewer", {
-                url: browserURL,
-                configs: configs
-            });
-            setButtonState(2);
-            setDoesViewerWindowExists(true);
+        console.log("OpenViewerButton");
+        // Start ws client and Open viewer window
+        if (isWebSocketURLValid && webSocketURL.length > 0) {
+            if (isBrowserURLValid && browserURL.length > 0) {
+                window.api.send("OpenViewer", {
+                    webSocketURL: webSocketURL,
+                    browserURL: browserURL,
+                    configs: configs
+                });
+                setButtonState(2);
+                setDoesViewerWindowExists(true);
+            } else {
+                console.log("URL is invalid");
+                setAppMessage("不正なURLのためコンテンツを開けません");
+                setAppMessageType("error");
+                enqueueSnackbar("不正なURLのためコンテンツを開けません", {
+                    variant: "error",
+                    autoHideDuration: 2000
+                });
+            }
         } else {
-            console.log("URL is invalid");
-            setAppMessage("不正なURLのためコンテンツを開けません");
+            console.log("WS URL is invalid");
+            setAppMessage("不正なURLのためWebSocketサーバに接続できません");
             setAppMessageType("error");
-            enqueueSnackbar("不正なURLのためコンテンツを開けません", {
+            enqueueSnackbar("不正なURLのためWebSocketサーバに接続できません", {
                 variant: "error",
                 autoHideDuration: 2000
             });
@@ -222,6 +238,18 @@ const MainViewContent = () => {
             return;
         }
         setIsBrowserURLValid(true);
+    };
+    const onWebSocketURLChange = (event) => {
+        setWebSocketURL(event.target.value);
+        // Check if the given url is valid
+        let url = "";
+        try {
+            url = new URL(event.target.value);
+        } catch (_) {
+            setIsWebSocketURLValid(false);
+            return;
+        }
+        setIsWebSocketURLValid(true);
     };
 
 
@@ -264,12 +292,26 @@ const MainViewContent = () => {
                   <List aria-labelledby="config-list-subheader">
                     <ListItem>
                       <ListItemIcon>
-                        <WebIcon />
+                        <DnsIcon />
                       </ListItemIcon>
-                      <ListItemText primary="URL" />
+                      <ListItemText primary="データサーバ" />
                       <ListItemSecondaryAction>
                         <TextField className={ classes.textfield } variant="outlined" size="small"
-                                   name="browserURLField" label="コンテンツ"
+                                   name="webSocketURLField" label="URL"
+                                   helperText={ !isWebSocketURLValid && "URLが不正です" }
+                                   value={ webSocketURL }
+                                   onChange={ onWebSocketURLChange }
+                                   error={ !isWebSocketURLValid } />
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    <ListItem>
+                      <ListItemIcon>
+                        <WebIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="コンテンツ" />
+                      <ListItemSecondaryAction>
+                        <TextField className={ classes.textfield } variant="outlined" size="small"
+                                   name="browserURLField" label="URL"
                                    helperText={ !isBrowserURLValid && "URLが不正です" }
                                    value={ browserURL }
                                    onChange={ onBrowserURLChange }
