@@ -106,9 +106,9 @@ const MainView = () => {
             webViewRefObj.current.openDevTools();
         }
     };
-    const onGazeDataFromMainToViewer = (event, arg) => {
+    const onEyeDataFromMainToViewer = (event, arg) => {
         if (webViewRefObj.current) {
-            webViewRefObj.current.send("GazeDataFromViewerToWebView", arg);
+            webViewRefObj.current.send("EyeDataFromViewerToWebView", arg);
         }
     };
     const onStartAnalysis = (event, arg) => {
@@ -133,7 +133,7 @@ const MainView = () => {
         // IPC Receive (from Main) Create Listener
         window.viewerIPCOn("InitializeViewerFromMain", onInitializeViewerFromMain);
         window.viewerIPCOn("OpenDevTools", onOpenDevTools);
-        window.viewerIPCOn("GazeDataFromMainToViewer", onGazeDataFromMainToViewer);
+        window.viewerIPCOn("EyeDataFromMainToViewer", onEyeDataFromMainToViewer);
         window.viewerIPCOn("StartAnalysis", onStartAnalysis);
         window.viewerIPCOn("StopAnalysis", onStopAnalysis);
         // Cleanup
@@ -141,7 +141,7 @@ const MainView = () => {
             // IPC Receive (from Main) Remove Listener
             window.viewerIPCRemove("InitializeViewerFromMain", onInitializeViewerFromMain);
             window.viewerIPCRemove("OpenDevTools", onOpenDevTools);
-            window.viewerIPCRemove("GazeDataFromMainToViewer", onGazeDataFromMainToViewer);
+            window.viewerIPCRemove("EyeDataFromMainToViewer", onEyeDataFromMainToViewer);
             window.viewerIPCRemove("StartAnalysis", onStartAnalysis);
             window.viewerIPCRemove("StopAnalysis", onStopAnalysis);
             // Stop the capturer

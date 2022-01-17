@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', function () {
         configs = arg.configs;
         console.log(configs);
     });
-    ipcRenderer.on("GazeDataFromViewerToWebView", (event, arg) => {
-        console.log("Received Gaze Data");
+    ipcRenderer.on("EyeDataFromViewerToWebView", (event, arg) => {
+        console.log("Received Eye Data");
         console.log(arg);
         const dataCount = arg.length;
         const xPathList = arg.map(data => {

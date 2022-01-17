@@ -428,7 +428,7 @@ const InitializeWSClient = (path) => {
             }
             // Send to viewer if necessary
             if (isViewerAvailable) {
-                viewerWindow.webContents.send("GazeDataFromMainToViewer", parsedDataArray);
+                viewerWindow.webContents.send("EyeDataFromMainToViewer", parsedDataArray);
             }
             break;
         }
@@ -465,7 +465,7 @@ const InitializeWSClient = (path) => {
             parsedDataArray.push(parsedData);
             // Send to viewer if necessary
             if (isViewerAvailable) {
-                viewerWindow.webContents.send("GazeDataFromMainToViewer", parsedDataArray);
+                viewerWindow.webContents.send("EyeDataFromMainToViewer", parsedDataArray);
             }
             break;
         }
@@ -495,7 +495,7 @@ const InitializeWSClient = (path) => {
             parsedDataArray.push(parsedData);
             // Send to viewer if necessary
             if (isViewerAvailable) {
-                viewerWindow.webContents.send("GazeDataFromMainToViewer", parsedDataArray);
+                viewerWindow.webContents.send("EyeDataFromMainToViewer", parsedDataArray);
             }
             break;
         }
