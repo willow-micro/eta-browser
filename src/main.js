@@ -385,7 +385,7 @@ const InitializeWSClient = (path) => {
         }
         // Parse messages from TobiiSBETServer
         switch (eventID) {
-        case WSEventID.FixationStarted:
+        case WSEventID.FixationStarted: {
             // FixationStarted event //////////////////////////////////////////
             const dataCount = parseInt(messageArray[1].substring(1), 10);
             if (dataCount === NaN) {
@@ -431,7 +431,8 @@ const InitializeWSClient = (path) => {
                 viewerWindow.webContents.send("GazeDataFromMainToViewer", parsedDataArray);
             }
             break;
-        case WSEventID.FixationEnded:
+        }
+        case WSEventID.FixationEnded: {
             // FixationEnded event ////////////////////////////////////////////
             const parsedDataArray = [
                 {
@@ -467,7 +468,8 @@ const InitializeWSClient = (path) => {
                 viewerWindow.webContents.send("GazeDataFromMainToViewer", parsedDataArray);
             }
             break;
-        case WSEventID.LFHFComputed:
+        }
+        case WSEventID.LFHFComputed: {
             // LFHFComputed event /////////////////////////////////////////////
             const parsedDataArray = [
                 {
@@ -496,9 +498,11 @@ const InitializeWSClient = (path) => {
                 viewerWindow.webContents.send("GazeDataFromMainToViewer", parsedDataArray);
             }
             break;
-        default:
+        }
+        default: {
             console.log("Received WSEventID is unknown");
             break;
+        }
         }
     });
 };
