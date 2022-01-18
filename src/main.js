@@ -153,7 +153,6 @@ ipcMain.on("OpenViewer", (event, arg) => {
         isViewerAvailable = false;
         // Close ws
         if (websocket !== null) {
-            websocket.teminate();
             websocket = null;
             isWebSocketConnected = false;
         }
@@ -318,8 +317,9 @@ ipcMain.on("StopAnalysis", (event, arg) => {
 // Receive DOM Data ///////////////////////////////////////////////////////////
 ipcMain.on("DOMDataFromViewerToMain", (event, arg) => {
     mainWindow.webContents.send("DOMDataFromMainToMainWindow", arg);
-    if (isRecording && configs) {
+    if (isRecording && configs && csvFormatStream && csvSaveStream) {
         let csvWriteHashArray = [];
+        csvWriteHashArray.push(["EventID", arg.eventID]);
         if (configs.generalDataCollection.timestamp) {
             csvWriteHashArray.push(["Timestamp[ms]", timekeeper.getElapsedTime()]);
         }
@@ -333,18 +333,19 @@ ipcMain.on("DOMDataFromViewerToMain", (event, arg) => {
         if (configs.generalDataCollection.overlapFiltered) {
             csvWriteHashArray.push(["Element Overlap (Filtered)", arg.elemOverlapFiltered]);
         }
-        arg.leafSideElementData.map((elementData, index) => {
-            csvWriteHashArray.push([`LeafSideElem(${index + 1}): TagName`, elementData["tagName"]]);
+        for (var index = 0; index < configs.adoptRange.leaf; index++) {
+            csvWriteHashArray.push([`LeafSideElem(${index + 1}): TagName`, arg.leafSideElementData[index]["tagName"]]);
             configs.elementDataCollection.attributes.map((attribute) => {
-                csvWriteHashArray.push([`LeafSideElem(${index + 1}): ${attribute}`, elementData[attribute]]);
+                csvWriteHashArray.push([`LeafSideElem(${index + 1}): ${attribute}`, arg.leafSideElementData[index][attribute]]);
             });
-        });
-        arg.rootSideElementData.map((elementData, index) => {
-            csvWriteHashArray.push([`RootSideElem(-${index + 1}): TagName`, elementData["tagName"]]);
+        }
+        for (var index = 0; index < configs.adoptRange.root; index++) {
+            csvWriteHashArray.push([`RootSideElem(-${index + 1}): TagName`, arg.rootSideElementData[index]["tagName"]]);
             configs.elementDataCollection.attributes.map((attribute) => {
-                csvWriteHashArray.push([`RootSideElem(-${index + 1}): ${attribute}`, elementData[attribute]]);
+                csvWriteHashArray.push([`RootSideElem(-${index + 1}): ${attribute}`, arg.rootSideElementData[index][attribute]]);
             });
-        });
+        }
+        csvWriteHashArray.push(["LFHF", 0.0]);
         csvFormatStream.write(csvWriteHashArray);
     }
 });
@@ -380,6 +381,14 @@ const InitializeWSClient = (path) => {
         });
         isWebSocketConnected = false;
     });
+    websocket.on("error", () => {
+        console.log("error with ws server");
+        mainWindow.webContents.send("AppMessage", {
+            message: "データサーバに接続できません",
+            type: "error"
+        });
+        isWebSocketConnected = false;
+    });
     websocket.on("message", (msg) => {
         const messageStr = msg.toString();
         const messageArray = messageStr.split(",");
@@ -391,9 +400,9 @@ const InitializeWSClient = (path) => {
         }
 
         // Debug
-        console.log("received from ws server:");
-        console.log(messageArray); // Content
-        console.log("CurrentUnixTime: " + Date.now()); // UnixTime (Electron)
+        //console.log("received from ws server:");
+        //console.log(messageArray); // Content
+        //console.log("CurrentUnixTime: " + Date.now()); // UnixTime (Electron)
 
         // Switch with WSEventID
         const eventID = parseInt(messageArray[0].substring(1), 10);
@@ -412,108 +421,140 @@ const InitializeWSClient = (path) => {
             } else {
                 console.log("ConsecutiveDataCount: " + dataCount);
             }
-
-            const parsedDataArray = [
-                {
-                    id: eventID,
-                    n: dataCount
-                }
-            ];
+            const parsedDataArray = new Array(dataCount);
             for (var dataNumber = 0; dataNumber < dataCount; dataNumber++) {
-                const parsedData = {};
-                const unixTimeStr = messageArray[2 + dataNumber].substring(1);
+                const unixTimeStr = messageArray[2 + dataNumber * 3].substring(1);
                 const unixTime = parseInt(unixTimeStr, 10);
                 if (unixTime === NaN) {
                     console.log("Received unixTime is NaN");
                     return;
                 }
-                parsedData.time = unixTime;
-                const screenXStr = messageArray[3 + dataNumber].substring(1);
+                const screenXStr = messageArray[3 + dataNumber * 3].substring(1);
                 const screenX = parseInt(screenXStr, 10);
                 if (screenX === NaN) {
                     console.log("Received screenX is NaN");
                     return;
                 }
-                parsedData.x = screenX;
-                const screenYStr = messageArray[4 + dataNumber].substring(1);
+                const screenYStr = messageArray[4 + dataNumber * 3].substring(1);
                 const screenY = parseInt(screenYStr, 10);
                 if (screenY === NaN) {
                     console.log("Received screenY is NaN");
                     return;
                 }
-                parsedData.y = screenY;
-                parsedDataArray.push(parsedData);
+                const parsedData = {
+                    time: unixTime,
+                    x: screenX,
+                    y: screenY
+                };
+                parsedDataArray[dataNumber] = parsedData;
             }
+
             // Send to viewer if necessary
             if (isViewerAvailable) {
-                viewerWindow.webContents.send("EyeDataFromMainToViewer", parsedDataArray);
+                viewerWindow.webContents.send("EyeDataFromMainToViewer", {
+                    id: eventID,
+                    n: dataCount,
+                    data: parsedDataArray
+                });
             }
             break;
         }
         case WSEventID.FixationEnded: {
             // FixationEnded event ////////////////////////////////////////////
-            const parsedDataArray = [
-                {
-                    id: eventID,
-                    n: 1
-                }
-            ];
-            const parsedData = {};
+            const parsedDataArray = new Array(1);
             const unixTimeStr = messageArray[1].substring(1);
             const unixTime = parseInt(unixTimeStr, 10);
             if (unixTime === NaN) {
                 console.log("Received unixTime is NaN");
                 return;
             }
-            parsedData.time = unixTime;
             const screenXStr = messageArray[2].substring(1);
             const screenX = parseInt(screenXStr, 10);
             if (screenX === NaN) {
                 console.log("Received screenX is NaN");
                 return;
             }
-            parsedData.x = screenX;
             const screenYStr = messageArray[3].substring(1);
             const screenY = parseInt(screenYStr, 10);
             if (screenY === NaN) {
                 console.log("Received screenY is NaN");
                 return;
             }
-            parsedData.y = screenY;
-            parsedDataArray.push(parsedData);
+            const parsedData = {
+                time: unixTime,
+                x: screenX,
+                y: screenY
+            };
+            parsedDataArray[0] = parsedData;
             // Send to viewer if necessary
             if (isViewerAvailable) {
-                viewerWindow.webContents.send("EyeDataFromMainToViewer", parsedDataArray);
+                viewerWindow.webContents.send("EyeDataFromMainToViewer", {
+                    id: eventID,
+                    n: 1,
+                    data: parsedDataArray
+                });
             }
             break;
         }
         case WSEventID.LFHFComputed: {
             // LFHFComputed event /////////////////////////////////////////////
-            const parsedDataArray = [
-                {
-                    id: eventID,
-                    n: 1
-                }
-            ];
-            const parsedData = {};
             const unixTimeStr = messageArray[1].substring(1);
             const unixTime = parseInt(unixTimeStr, 10);
             if (unixTime === NaN) {
                 console.log("Received unixTime is NaN");
                 return;
             }
-            parsedData.time = unixTime;
             const lfhfStr = messageArray[2].substring(1);
             const lfhf = parseFloat(lfhfStr); // F3
             if (lfhf === NaN) {
                 console.log("Received lfhf is NaN");
                 return;
             }
-            parsedData.lfhf = lfhf;
-            parsedDataArray.push(parsedData);
-            // Send to viewer if necessary
-            if (isViewerAvailable) {
-                viewerWindow.webContents.send("EyeDataFromMainToViewer", parsedDataArray);
+            // const parsedDataArray = [];
+            // const parsedData = {
+            //     time: unixTime,
+            //     lfhf: lfhf
+            // };
+            // parsedDataArray.push(parsedData);
+            // // Send to viewer if necessary
+            // if (isViewerAvailable) {
+            //     viewerWindow.webContents.send("EyeDataFromMainToViewer", {
+            //         id: eventID,
+            //         n: 1,
+            //         data: parsedDataArray
+            //     });
+            // }
+            // Write to csv
+            if (isRecording && configs && csvFormatStream && csvSaveStream) {
+                let csvWriteHashArray = [];
+                csvWriteHashArray.push(["EventID", eventID]);
+                if (configs.generalDataCollection.timestamp) {
+                    csvWriteHashArray.push(["Timestamp[ms]", timekeeper.getElapsedTime()]);
+                }
+                if (configs.generalDataCollection.coordinates) {
+                    csvWriteHashArray.push(["X", 0]);
+                    csvWriteHashArray.push(["Y", 0]);
+                }
+                if (configs.generalDataCollection.overlapAll) {
+                    csvWriteHashArray.push(["Element Overlap (All)", ""]);
+                }
+                if (configs.generalDataCollection.overlapFiltered) {
+                    csvWriteHashArray.push(["Element Overlap (Filtered)", ""]);
+                }
+                for (var index = 0; index < configs.adoptRange.leaf; index++) {
+                    csvWriteHashArray.push([`LeafSideElem(${index + 1}): TagName`, ""]);
+                    configs.elementDataCollection.attributes.map((attribute) => {
+                        csvWriteHashArray.push([`LeafSideElem(${index + 1}): ${attribute}`, ""]);
+                    });
+                }
+                for (var index = 0; index < configs.adoptRange.root; index++) {
+                    csvWriteHashArray.push([`RootSideElem(-${index + 1}): TagName`, ""]);
+                    configs.elementDataCollection.attributes.map((attribute) => {
+                        csvWriteHashArray.push([`RootSideElem(-${index + 1}): ${attribute}`, ""]);
+                    });
+                }
+                csvWriteHashArray.push(["LFHF", lfhf]);
+                csvFormatStream.write(csvWriteHashArray);
             }
             break;
         }
