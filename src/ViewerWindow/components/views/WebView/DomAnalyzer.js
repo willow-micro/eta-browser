@@ -21,30 +21,30 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(configs);
     });
     ipcRenderer.on("EyeDataFromViewerToWebView", (event, arg) => {
-        console.log("Received Eye Data");
+        console.log("Received Eye Data. EventID: " + arg[0].id);
         console.log(arg);
-        const dataCount = arg.length;
-        const xPathList = arg.map(data => {
-            const viewerX = data.x - window.screenX;
-            const viewerY = data.y - window.screenY;
-            const element = document.elementsFromPoint(viewerX, viewerY)[0];
-            if (element != null && element != undefined) {
-                return getXPath(element);
-            } else {
-                return "";
-            }
-        });
-        console.log(xPathList);
-        const majorityXPath = getMajorityElement(xPathList);
-        const majorityDataIndex = xPathList.indexOf(majorityXPath);
-        console.log("Majority: " + majorityDataIndex + " (" + majorityXPath + ")");
+        // const dataCount = arg.length;
+        // const xPathList = arg.map(data => {
+        //     const viewerX = data.x - window.screenX;
+        //     const viewerY = data.y - window.screenY;
+        //     const element = document.elementsFromPoint(viewerX, viewerY)[0];
+        //     if (element != null && element != undefined) {
+        //         return getXPath(element);
+        //     } else {
+        //         return "";
+        //     }
+        // });
+        // console.log(xPathList);
+        // const majorityXPath = getMajorityElement(xPathList);
+        // const majorityDataIndex = xPathList.indexOf(majorityXPath);
+        // console.log("Majority: " + majorityDataIndex + " (" + majorityXPath + ")");
 
-        // If configs are available, send dom data
-        if (configs && majorityXPath !== "") {
-            const targetViewerX = arg[majorityDataIndex].x - window.screenX;
-            const targetViewerY = arg[majorityDataIndex].y - window.screenY;
-            sendDomDataAt(targetViewerX, targetViewerY);
-        }
+        // // If configs are available, send dom data
+        // if (configs && majorityXPath !== "") {
+        //     const targetViewerX = arg[majorityDataIndex].x - window.screenX;
+        //     const targetViewerY = arg[majorityDataIndex].y - window.screenY;
+        //     sendDomDataAt(targetViewerX, targetViewerY);
+        // }
     });
 });
 
