@@ -28,6 +28,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 let isRecording = false;
 let isViewerAvailable = false;
 let isWebSocketConnected = false;
+let isWaitingForFixationEnded = false;
 /// Config data
 let configs = null;
 /// Make windows object visible from entire the main script
@@ -365,6 +366,7 @@ const InitializeWSClient = (path) => {
     websocket = new ws.WebSocket(path, {
         perMessageDeflate: false
     });
+    isWaitingForFixationEnded = false;
     // Handlers ///////////////////////////////////////////////////////////////
     websocket.on("open", () => {
         console.log("connected to ws server");
@@ -419,8 +421,6 @@ const InitializeWSClient = (path) => {
             if (dataCount === NaN) {
                 console.log("Received dataCount is NaN");
                 return;
-            } else {
-                console.log("ConsecutiveDataCount: " + dataCount);
             }
             const parsedDataArray = new Array(dataCount);
             for (var dataNumber = 0; dataNumber < dataCount; dataNumber++) {
@@ -458,6 +458,8 @@ const InitializeWSClient = (path) => {
                     data: parsedDataArray
                 });
             }
+
+            isWaitingForFixationEnded = true;
             break;
         }
         case WSEventID.FixationEnded: {
@@ -488,12 +490,13 @@ const InitializeWSClient = (path) => {
             };
             parsedDataArray[0] = parsedData;
             // Send to viewer if necessary
-            if (isViewerAvailable) {
+            if (isViewerAvailable && isWaitingForFixationEnded) {
                 viewerWindow.webContents.send("EyeDataFromMainToViewer", {
                     id: eventID,
                     n: 1,
                     data: parsedDataArray
                 });
+                isWaitingForFixationEnded = false;
             }
             break;
         }
