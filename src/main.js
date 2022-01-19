@@ -243,7 +243,7 @@ ipcMain.on("RequestCaptureDestinationPath", (event, arg) => {
 
 // Add capture video data chunk to the stream /////////////////////////////////
 ipcMain.on("CaptureDataChunkFromViewerToMain", (event, arg) => {
-    if (isCaptureSaveStreamActive) {
+    if (isCaptureSaveStreamActive && captureSaveStream) {
         // Convert to Buffer from Uint8Array
         const buffer = Buffer.from(arg.uint8Array);
         // Write a buffer to the fs writable stream
@@ -317,7 +317,6 @@ ipcMain.on("StopAnalysis", (event, arg) => {
 // Receive DOM Data ///////////////////////////////////////////////////////////
 ipcMain.on("DOMDataFromViewerToMain", (event, arg) => {
     mainWindow.webContents.send("DOMDataFromMainToMainWindow", arg);
-    console.log("main");
     if (isRecording && configs && csvFormatStream && csvSaveStream) {
         let csvWriteHashArray = [];
         csvWriteHashArray.push(["EventID", arg.eventID]);
