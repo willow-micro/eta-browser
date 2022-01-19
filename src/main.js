@@ -317,11 +317,13 @@ ipcMain.on("StopAnalysis", (event, arg) => {
 // Receive DOM Data ///////////////////////////////////////////////////////////
 ipcMain.on("DOMDataFromViewerToMain", (event, arg) => {
     mainWindow.webContents.send("DOMDataFromMainToMainWindow", arg);
+    console.log("main");
     if (isRecording && configs && csvFormatStream && csvSaveStream) {
         let csvWriteHashArray = [];
         csvWriteHashArray.push(["EventID", arg.eventID]);
         if (configs.generalDataCollection.timestamp) {
-            csvWriteHashArray.push(["Timestamp[ms]", timekeeper.getElapsedTime()]);
+            csvWriteHashArray.push(["Timestamp(App)", timekeeper.getElapsedTime()]);
+            csvWriteHashArray.push(["Timestamp(Server)", arg.serverTime]);
         }
         if (configs.generalDataCollection.coordinates) {
             csvWriteHashArray.push(["X", arg.coordinates.x]);
@@ -529,7 +531,8 @@ const InitializeWSClient = (path) => {
                 let csvWriteHashArray = [];
                 csvWriteHashArray.push(["EventID", eventID]);
                 if (configs.generalDataCollection.timestamp) {
-                    csvWriteHashArray.push(["Timestamp[ms]", timekeeper.getElapsedTime()]);
+                    csvWriteHashArray.push(["Timestamp(App)", timekeeper.getElapsedTime()]);
+                    csvWriteHashArray.push(["Timestamp(Server)", unixTime]);
                 }
                 if (configs.generalDataCollection.coordinates) {
                     csvWriteHashArray.push(["X", 0]);

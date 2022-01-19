@@ -43,14 +43,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const majorityIndex = elementXPathList.indexOf(majorityXPath);
             console.log("majority: " + majorityIndex + " (" + majorityXPath + ")");
             if (configs && majorityXPath !== "") {
-                sendDomDataAt(eventID, arg.data[majorityIndex].x, arg.data[majorityIndex].y);
+                sendDomDataAt(eventID, arg.data[majorityIndex].x, arg.data[majorityIndex].y, arg.data[majorityIndex].time);
             }
             break;
         }
         case WSEventID.FixationEnded: {
             console.log("FixationEnded");
             if (configs) {
-                sendDomDataAt(eventID, arg.data[0].x, arg.data[0].y);
+                sendDomDataAt(eventID, arg.data[0].x, arg.data[0].y, arg.data[0].time);
             }
             break;
         }
@@ -95,7 +95,7 @@ function getMajorityElement(list) {
 }
 
 // Get DOM data and Send it
-function sendDomDataAt(eventID, xPos, yPos) {
+function sendDomDataAt(eventID, xPos, yPos, serverTime) {
     const viewerX = xPos - window.screenX;
     const viewerY = yPos - window.screenY;
 
@@ -207,7 +207,8 @@ function sendDomDataAt(eventID, xPos, yPos) {
         elemOverlapAll: elemOverlapAll,
         elemOverlapFiltered: elemOverlapFiltered,
         leafSideElementData: leafSideElementData,
-        rootSideElementData: rootSideElementData
+        rootSideElementData: rootSideElementData,
+        serverTime: serverTime
     });
 }
 
