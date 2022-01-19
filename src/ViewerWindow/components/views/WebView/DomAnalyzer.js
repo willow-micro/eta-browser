@@ -13,6 +13,7 @@ const getXPath = require('get-xpath');
 const WSEventID = require('./WSEventID.js');
 
 let configs = null;
+let isWaitingForFixationEnded = false;
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOMAnalyzer was loaded.");
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
     ipcRenderer.on("InitializeWebViewFromViewer", (event, arg) => {
         configs = arg.configs;
         console.log(configs);
+        isWaitingForFixationEnded = false;
     });
     ipcRenderer.on("EyeDataFromViewerToWebView", (event, arg) => {
         console.log("Received Eye Data. EventID: " + arg.id);
@@ -44,13 +46,15 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log("majority: " + majorityIndex + " (" + majorityXPath + ")");
             if (configs && majorityXPath !== "") {
                 sendDomDataAt(eventID, arg.data[majorityIndex].x, arg.data[majorityIndex].y, arg.data[majorityIndex].time);
+                isWaitingForFixationEnded = true;
             }
             break;
         }
         case WSEventID.FixationEnded: {
             console.log("FixationEnded");
-            if (configs) {
+            if (configs && isWaitingForFixationEnded) {
                 sendDomDataAt(eventID, arg.data[0].x, arg.data[0].y, arg.data[0].time);
+                isWaitingForFixationEnded = false;
             }
             break;
         }
