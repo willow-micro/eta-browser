@@ -118,7 +118,8 @@ const MainView = () => {
             });
             console.log("Start Analysis");
             console.log(configs);
-            capturer.start("ETA Browser (Viewer)", 800, 2560, 600, 1600);   // title, min width, max width, min height, max height
+            //capturer.startForWindow("ETA Browser (Viewer)", 800, 2560, 600, 1600);   // title, min width, max width, min height, max height
+            capturer.startForScreen(0, 800, 2560, 600, 1600);   // screenIndex, min width, max width, min height, max height
         }
     };
     const onStopAnalysis = (event, arg) => {

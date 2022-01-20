@@ -57,8 +57,8 @@ class Capturer extends EventEmitter {
 
     // Start / Stop Capturing Method
     // Start Desktop Capturing
-    start(targetTitle, minWidth, maxWidth, minHeight, maxHeight){
-        desktopCapturer.getSources({ types: ['window', 'screen'] }).then(async sources => {
+    startForWindow(targetTitle, minWidth, maxWidth, minHeight, maxHeight){
+        desktopCapturer.getSources({ types: ['window'] }).then(async sources => {
             for (const source of sources) {
                 if (source.name === targetTitle) {
                     navigator.mediaDevices.getUserMedia({
@@ -78,6 +78,26 @@ class Capturer extends EventEmitter {
                         .catch((error) => { this.handleCaptureStreamError(error) });
                 }
             }
+        });
+    }
+
+    startForScreen(screenIndex, minWidth, maxWidth, minHeight, maxHeight){
+        desktopCapturer.getSources({ types: ['screen'] }).then(async sources => {
+            navigator.mediaDevices.getUserMedia({
+                audio: false,
+                video: {
+                    mandatory: {
+                        chromeMediaSource: 'desktop',
+                        chromeMediaSourceId: sources[screenIndex].id,
+                        minWidth: minWidth,
+                        maxWidth: maxWidth,
+                        minHeight: minHeight,
+                        maxHeight: maxHeight
+                    }
+                }
+            })
+                .then((stream) => { this.handleCaptureStream(stream) })
+                .catch((error) => { this.handleCaptureStreamError(error) });
         });
     }
 
