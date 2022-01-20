@@ -28,6 +28,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 let isRecording = false;
 let isViewerAvailable = false;
 let isWebSocketConnected = false;
+let isLFHFComputedOnce = false;
 let isWaitingForFixationEnded = false;
 /// Config data
 let configs = null;
@@ -167,7 +168,7 @@ ipcMain.on("OpenViewer", (event, arg) => {
         });
         mainWindow.webContents.send("AppMessage", {
             message: "コンテンツを開きました",
-            type: "info"
+            type: "success"
         });
         isViewerAvailable = true;
     });
@@ -372,9 +373,10 @@ const InitializeWSClient = (path) => {
         console.log("connected to ws server");
         mainWindow.webContents.send("AppMessage", {
             message: "データサーバに接続しました",
-            type: "info"
+            type: "success"
         });
         isWebSocketConnected = true;
+        isLFHFComputedOnce = false;
     });
     websocket.on("close", () => {
         if (isWebSocketConnected) {
@@ -384,6 +386,7 @@ const InitializeWSClient = (path) => {
                 type: "info"
             });
             isWebSocketConnected = false;
+            isLFHFComputedOnce = false;
         }
     });
     websocket.on("error", () => {
@@ -393,6 +396,7 @@ const InitializeWSClient = (path) => {
             type: "error"
         });
         isWebSocketConnected = false;
+        isLFHFComputedOnce = false;
     });
     websocket.on("message", (msg) => {
         const messageStr = msg.toString();
@@ -516,20 +520,17 @@ const InitializeWSClient = (path) => {
                 console.log("Received lfhf is NaN");
                 return;
             }
-            // const parsedDataArray = [];
-            // const parsedData = {
-            //     time: unixTime,
-            //     lfhf: lfhf
-            // };
-            // parsedDataArray.push(parsedData);
-            // // Send to viewer if necessary
-            // if (isViewerAvailable) {
-            //     viewerWindow.webContents.send("EyeDataFromMainToViewer", {
-            //         id: eventID,
-            //         n: 1,
-            //         data: parsedDataArray
-            //     });
-            // }
+
+            // Allow to start analysis
+            if (!isLFHFComputedOnce) {
+                isLFHFComputedOnce = true;
+                mainWindow.webContents.send("AllowToStartAnalysis", {});
+                mainWindow.webContents.send("AppMessage", {
+                    message: "計測の準備が完了しました",
+                    type: "success"
+                });
+            }
+
             // Write to csv
             if (isRecording && configs && csvFormatStream && csvSaveStream) {
                 let csvWriteHashArray = [];

@@ -90,6 +90,9 @@ const MainViewContent = () => {
     const onRespondCaptureDestinationPath = (event, arg) => {
         setCaptureDestinationPath(arg.path);
     };
+    const onAllowToStartAnalysis = (event, arg) => {
+        setButtonState(2);
+    };
     const onDOMDataFromMainToMainWindow = (event, arg) => {
         // Coordinates
         setDomCoordinateX(arg.coordinates.x);
@@ -123,6 +126,7 @@ const MainViewContent = () => {
         window.api.on("AppMessage", onAppMessage);
         window.api.on("RespondCsvDestinationPath", onRespondCsvDestinationPath);
         window.api.on("RespondCaptureDestinationPath", onRespondCaptureDestinationPath);
+        window.api.on("AllowToStartAnalysis", onAllowToStartAnalysis);
         window.api.on("DOMDataFromMainToMainWindow", onDOMDataFromMainToMainWindow);
         window.api.on("ViewerClosed", onViewerClosed);
         // Cleanup
@@ -131,6 +135,7 @@ const MainViewContent = () => {
             window.api.remove("AppMessage", onAppMessage);
             window.api.remove("RespondCsvDestinationPath", onRespondCsvDestinationPath);
             window.api.remove("RespondCaptureDestinationPath", onRespondCaptureDestinationPath);
+            window.api.remove("AllowToStartAnalysis", onAllowToStartAnalysis);
             window.api.remove("DOMDataFromMainToMainWindow", onDOMDataFromMainToMainWindow);
             window.api.remove("ViewerClosed", onViewerClosed);
         };
@@ -193,7 +198,7 @@ const MainViewContent = () => {
                     browserURL: browserURL,
                     configs: configs
                 });
-                setButtonState(2);
+                setButtonState(0);
                 setDoesViewerWindowExists(true);
             } else {
                 console.log("URL is invalid");
