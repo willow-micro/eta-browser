@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     ipcRenderer.on("EyeDataFromViewerToWebView", (event, arg) => {
         //console.log("Received Eye Data. EventID: " + arg.id);
+        //console.log("Window: " + arg.windowWidth + " : " + arg.windowHeight);
 
         const eventID = arg.id;
         const dataCount = arg.n;
@@ -33,9 +34,11 @@ document.addEventListener('DOMContentLoaded', function () {
         case WSEventID.FixationStarted: {
             // console.log("FixationStarted");
             // console.log(arg.data);
-            var elementXPathList = new Array(dataCount);
+            let elementXPathList = new Array(dataCount);
             for (var i = 0; i < dataCount; i++) {
-                const element = getSingleElementAt(arg.data[i].x, arg.data[i].y);
+                const viewerX = arg.data[i].x - Math.round(arg.windowWidth / 4) - window.screenX;
+                const viewerY = arg.data[i].y - Math.round(arg.windowHeight / 4) - window.screenY;
+                const element = getSingleElementAt(viewerX, viewerY);
                 if (element == null) {
                     return;
                 }
@@ -45,7 +48,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const majorityIndex = elementXPathList.indexOf(majorityXPath);
             // console.log("majority: " + majorityIndex + " (" + majorityXPath + ")");
             if (configs && majorityXPath !== "") {
-                sendDomDataAt(eventID, arg.data[majorityIndex].x, arg.data[majorityIndex].y, arg.data[majorityIndex].time);
+                const viewerX = arg.data[majorityIndex].x - Math.round(arg.windowWidth / 4) - window.screenX;
+                const viewerY = arg.data[majorityIndex].y - Math.round(arg.windowHeight / 4) - window.screenY;
+                console.log(viewerX);
+                sendDomDataAt(eventID, viewerX, viewerY, arg.data[majorityIndex].time);
                 isWaitingForFixationEnded = true;
             }
             break;
@@ -53,7 +59,9 @@ document.addEventListener('DOMContentLoaded', function () {
         case WSEventID.FixationEnded: {
             // console.log("FixationEnded");
             if (configs && isWaitingForFixationEnded) {
-                sendDomDataAt(eventID, arg.data[0].x, arg.data[0].y, arg.data[0].time);
+                const viewerX = arg.data[0].x - Math.round(arg.windowWidth / 4) - window.screenX;
+                const viewerY = arg.data[0].y - Math.round(arg.windowHeight / 4) - window.screenY;
+                sendDomDataAt(eventID, viewerX, viewerY, arg.data[0].time);
                 isWaitingForFixationEnded = false;
             }
             break;
@@ -71,11 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Get the deepest element at specified position if exist
 function getSingleElementAt(xPos, yPos) {
-    const viewerX = xPos - window.screenX;
-    const viewerY = yPos - window.screenY;
-    // const viewerX = xPos - (window.screen.width / 4);
-    // const viewerY = yPos - (window.screen.height / 4);
-    const element = document.elementsFromPoint(viewerX, viewerY)[0];
+    const element = document.elementsFromPoint(xPos, yPos)[0];
     if (element == null || element == undefined) {
         return null;
     }
@@ -102,13 +106,8 @@ function getMajorityElement(list) {
 
 // Get DOM data and Send it
 function sendDomDataAt(eventID, xPos, yPos, serverTime) {
-    const viewerX = xPos - window.screenX;
-    const viewerY = yPos - window.screenY;
-    // const viewerX = xPos - (window.screen.width / 4);
-    // const viewerY = yPos - (window.screen.height / 4);
-
     // Get Elements (Array): Deeper Elements First
-    const elements = document.elementsFromPoint(viewerX, viewerY);
+    const elements = document.elementsFromPoint(xPos, yPos);
 
     // Filtering Elements with configs
     const filteredElements = elements.filter(element => {

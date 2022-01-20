@@ -108,7 +108,10 @@ const MainView = () => {
     };
     const onEyeDataFromMainToViewer = (event, arg) => {
         if (webViewRefObj.current) {
-            webViewRefObj.current.send("EyeDataFromViewerToWebView", arg);
+            let argToSend = arg;
+            argToSend.windowWidth = window.innerWidth;
+            argToSend.windowHeight = window.innerHeight;
+            webViewRefObj.current.send("EyeDataFromViewerToWebView", argToSend);
         }
     };
     const onStartAnalysis = (event, arg) => {
@@ -151,31 +154,31 @@ const MainView = () => {
 
 
     // JSX
-    return (
-        <WebView url={ viewerDestinationURL }
-                 ref={ webViewRef } />
-    );
     /* return (
-     *     <div style={{
-     *         height: '100%',
-     *         width: '100%',
-     *         position: 'relative'
-     *     }}>
-     *       <div style={{
-     *           position: 'absolute',
-     *           height: '50%',
-     *           width: '50%',
-     *           top: 0,
-     *           right: 0,
-     *           bottom: 0,
-     *           left: 0,
-     *           margin: 'auto'
-     *       }} >
-     *         <WebView url={ viewerDestinationURL }
-     *                  ref={ webViewRef } />
-     *       </div>
-     *     </div>
+     *     <WebView url={ viewerDestinationURL }
+     *              ref={ webViewRef } />
      * ); */
+    return (
+        <div style={{
+            height: '100%',
+            width: '100%',
+            position: 'relative'
+        }}>
+          <div style={{
+              position: 'absolute',
+              height: '50%',
+              width: '50%',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              margin: 'auto'
+          }} >
+            <WebView url={ viewerDestinationURL }
+                     ref={ webViewRef } />
+          </div>
+        </div>
+    );
 };
 
 
