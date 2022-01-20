@@ -377,12 +377,14 @@ const InitializeWSClient = (path) => {
         isWebSocketConnected = true;
     });
     websocket.on("close", () => {
-        console.log("disconnected to ws server");
-        mainWindow.webContents.send("AppMessage", {
-            message: "データサーバを切断しました",
-            type: "info"
-        });
-        isWebSocketConnected = false;
+        if (isWebSocketConnected) {
+            console.log("disconnected to ws server");
+            mainWindow.webContents.send("AppMessage", {
+                message: "データサーバを切断しました",
+                type: "info"
+            });
+            isWebSocketConnected = false;
+        }
     });
     websocket.on("error", () => {
         console.log("error with ws server");
