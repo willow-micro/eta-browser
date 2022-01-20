@@ -71,10 +71,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Get the deepest element at specified position if exist
 function getSingleElementAt(xPos, yPos) {
-    // const viewerX = xPos - window.screenX;
-    // const viewerY = yPos - window.screenY;
-    const viewerX = xPos - (window.screen.width / 4);
-    const viewerY = yPos - (window.screen.height / 4);
+    const viewerX = xPos - window.screenX;
+    const viewerY = yPos - window.screenY;
+    // const viewerX = xPos - (window.screen.width / 4);
+    // const viewerY = yPos - (window.screen.height / 4);
     const element = document.elementsFromPoint(viewerX, viewerY)[0];
     if (element == null || element == undefined) {
         return null;
@@ -102,10 +102,10 @@ function getMajorityElement(list) {
 
 // Get DOM data and Send it
 function sendDomDataAt(eventID, xPos, yPos, serverTime) {
-    // const viewerX = xPos - window.screenX;
-    // const viewerY = yPos - window.screenY;
-    const viewerX = xPos - (window.screen.width / 4);
-    const viewerY = yPos - (window.screen.height / 4);
+    const viewerX = xPos - window.screenX;
+    const viewerY = yPos - window.screenY;
+    // const viewerX = xPos - (window.screen.width / 4);
+    // const viewerY = yPos - (window.screen.height / 4);
 
     // Get Elements (Array): Deeper Elements First
     const elements = document.elementsFromPoint(viewerX, viewerY);
