@@ -1,43 +1,56 @@
 // -*- coding: utf-8-unix -*-
+// ETA-Browser
 // Electron Main Process Script
 
-// System
+///////////////////////////////////////////////////////////////////////////////
+//                                   Import                                  //
+///////////////////////////////////////////////////////////////////////////////
+// System /////////////////////////////////////////////////////////////////////
 const { electron, app, BrowserWindow, ipcMain, Menu, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { format } = require('@fast-csv/format');
 const ws = require('ws');
-// User
+// User ///////////////////////////////////////////////////////////////////////
 const menuTemplate = require('./MenuTemplate.js');
 const Timekeeper = require('./Timekeeper.js');
-let isRecording = false;
-let configs = null;
-let isViewerAvailable = false;
+const WSEventID = require('./WSEventID.js');
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+// Handle creating/removing shortcuts on Windows when installing/uninstalling //
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
     app.quit();
 }
 
-// Make windows object visible from entire the main script
+///////////////////////////////////////////////////////////////////////////////
+//                              Global variables                             //
+///////////////////////////////////////////////////////////////////////////////
+/// Global flags
+let isRecording = false;
+let isViewerAvailable = false;
+let isWebSocketConnected = false;
+let isWaitingForFixationEnded = false;
+/// Config data
+let configs = null;
+/// Make windows object visible from entire the main script
 let mainWindow = null;
 let viewerWindow = null;
-
-// Timekeeper for timestamps
+/// Timekeeper for timestamps
 const timekeeper = new Timekeeper();
-// CSV Format Stream
+/// CSV Format Stream
 let csvFormatStream = null;
 let csvSaveStream = null;
 let csvDestinationPath = "";
-// Desktop Capture
+/// Desktop Capture
 let captureSaveStream = null;
 let captureDestinationPath = "";
 let isCaptureSaveStreamActive = false;
-
-// WebSocket instance
+// WebSocket client instance
 let websocket = null;
 
-// Create the main window
+
+///////////////////////////////////////////////////////////////////////////////
+//                           Create the main window                          //
+///////////////////////////////////////////////////////////////////////////////
 const createWindow = () => {
     // Create the browser window.
     mainWindow = new BrowserWindow({
@@ -54,7 +67,7 @@ const createWindow = () => {
         }
     });
 
-    // Set template
+    // Set menu template
     const menu = Menu.buildFromTemplate(menuTemplate);
     Menu.setApplicationMenu(menu);
 
@@ -64,55 +77,6 @@ const createWindow = () => {
     // Open the DevTools.
     mainWindow.webContents.openDevTools();
 
-    // Initialize a websocket instance
-    websocket = new ws.WebSocket("ws://mbp2015-bootcamp.local:8008/EyeTracker", {
-        perMessageDeflate: false
-    });
-    websocket.on("open", () => {
-        console.log("connected to ws server");
-        mainWindow.webContents.send("AppMessage", {
-            message: "Ready for Receiving Eye Data",
-            type: "info"
-        });
-    });
-    websocket.on("message", (msg) => {
-        const messageStr = msg.toString();
-
-        const messageArray = messageStr.split(",");
-
-        // Debug
-        console.log("received from ws server:");
-        console.log(messageArray); // Content
-        console.log("CurrentUnixTime: " + Date.now()); // UnixTime (Electron)
-
-        const dataCount = parseInt(messageArray[0].substring(1), 10);
-        console.log("DataCount4Majority: " + dataCount);
-
-        const parsedData = messageArray.slice(1).map(dataString => {
-            const unixTimeStr = dataString.substring(
-                dataString.indexOf("t") + 1,
-                dataString.indexOf("x")
-            );
-            const screenXStr = dataString.substring(
-                dataString.indexOf("x") + 1,
-                dataString.indexOf("y")
-            );
-            const screenYStr = dataString.substring(
-                dataString.indexOf("y") + 1
-            );
-
-            return {
-                time: parseInt(unixTimeStr, 10),
-                x: parseInt(screenXStr, 10),
-                y: parseInt(screenYStr, 10)
-            };
-        });
-
-        if (isViewerAvailable) {
-            viewerWindow.webContents.send("GazeDataFromMainToViewer", parsedData);
-        }
-    });
-
     // When the main window is closed, back it to a null object.
     mainWindow.on('closed', function() {
         mainWindow = null;
@@ -120,6 +84,10 @@ const createWindow = () => {
     });
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
+//                                App handlers                               //
+///////////////////////////////////////////////////////////////////////////////
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -142,10 +110,10 @@ app.on('activate', () => {
     }
 });
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
-
-// IPC Message Rx (from Renderer)
+///////////////////////////////////////////////////////////////////////////////
+//                                IPC handlers                               //
+///////////////////////////////////////////////////////////////////////////////
+// Open viewer window /////////////////////////////////////////////////////////
 ipcMain.on("OpenViewer", (event, arg) => {
     // Make eta browser window
     viewerWindow = new BrowserWindow({
@@ -184,12 +152,17 @@ ipcMain.on("OpenViewer", (event, arg) => {
             captureSaveStream = null;
         }
         isViewerAvailable = false;
+        // Close ws
+        if (websocket !== null) {
+            websocket = null;
+            isWebSocketConnected = false;
+        }
     });
 
     // Send Destination URL when the viewer window is ready
     viewerWindow.webContents.once('dom-ready', () => {
         viewerWindow.webContents.send("InitializeViewerFromMain", {
-            url: arg.url,
+            url: arg.browserURL,
             configs: arg.configs
         });
         mainWindow.webContents.send("AppMessage", {
@@ -200,8 +173,14 @@ ipcMain.on("OpenViewer", (event, arg) => {
     });
 
     configs = arg.configs;
+
+    // Start ws client
+    console.log("StartWSClient: " + arg.webSocketURL);
+    // Open websocket client
+    InitializeWSClient(arg.webSocketURL);
 });
 
+// Open CSV path modal ////////////////////////////////////////////////////////
 ipcMain.on("RequestCsvDestinationPath", (event, arg) => {
     const filePath = dialog.showSaveDialog(mainWindow, {
         buttonLabel: "Save",
@@ -231,6 +210,8 @@ ipcMain.on("RequestCsvDestinationPath", (event, arg) => {
         }
     });
 });
+
+// Open capture video path modal //////////////////////////////////////////////
 ipcMain.on("RequestCaptureDestinationPath", (event, arg) => {
     const filePath = dialog.showSaveDialog(mainWindow, {
         buttonLabel: "Save",
@@ -261,9 +242,9 @@ ipcMain.on("RequestCaptureDestinationPath", (event, arg) => {
     });
 });
 
-
+// Add capture video data chunk to the stream /////////////////////////////////
 ipcMain.on("CaptureDataChunkFromViewerToMain", (event, arg) => {
-    if (isCaptureSaveStreamActive) {
+    if (isCaptureSaveStreamActive && captureSaveStream) {
         // Convert to Buffer from Uint8Array
         const buffer = Buffer.from(arg.uint8Array);
         // Write a buffer to the fs writable stream
@@ -271,13 +252,14 @@ ipcMain.on("CaptureDataChunkFromViewerToMain", (event, arg) => {
     }
 });
 
+// End capturing //////////////////////////////////////////////////////////////
 ipcMain.on("CaptureEndedInViewer", (event, arg) => {
     // Capture Cleanup
     captureSaveStream.end();
     captureSaveStream = null;
 });
 
-// Start / Stop Analysis
+// Start analysis /////////////////////////////////////////////////////////////
 ipcMain.on("StartAnalysis", (event, arg) => {
     viewerWindow.webContents.send("StartAnalysis", {}); // Thru
     timekeeper.startCounting();
@@ -320,6 +302,8 @@ ipcMain.on("StartAnalysis", (event, arg) => {
         isCaptureSaveStreamActive = false;
     });
 });
+
+// Stop analysis //////////////////////////////////////////////////////////////
 ipcMain.on("StopAnalysis", (event, arg) => {
     viewerWindow.webContents.send("StopAnalysis", {}); // Thru
     console.log(`Analysis ended with ${ timekeeper.getElapsedTime() } [ms].`);
@@ -329,16 +313,17 @@ ipcMain.on("StopAnalysis", (event, arg) => {
     csvFormatStream.end();
     csvFormatStream = null;
     csvSaveStream = null;
-    // Wait for capture cleanup until the capturing finishes
 });
 
-// DOMData Thru and Store to CSV
+// Receive DOM Data ///////////////////////////////////////////////////////////
 ipcMain.on("DOMDataFromViewerToMain", (event, arg) => {
     mainWindow.webContents.send("DOMDataFromMainToMainWindow", arg);
-    if (isRecording && configs) {
+    if (isRecording && configs && csvFormatStream && csvSaveStream) {
         let csvWriteHashArray = [];
+        csvWriteHashArray.push(["EventID", arg.eventID]);
         if (configs.generalDataCollection.timestamp) {
-            csvWriteHashArray.push(["Timestamp[ms]", timekeeper.getElapsedTime()]);
+            csvWriteHashArray.push(["Timestamp(App)", timekeeper.getElapsedTime()]);
+            csvWriteHashArray.push(["Timestamp(Server)", arg.serverTime]);
         }
         if (configs.generalDataCollection.coordinates) {
             csvWriteHashArray.push(["X", arg.coordinates.x]);
@@ -350,23 +335,238 @@ ipcMain.on("DOMDataFromViewerToMain", (event, arg) => {
         if (configs.generalDataCollection.overlapFiltered) {
             csvWriteHashArray.push(["Element Overlap (Filtered)", arg.elemOverlapFiltered]);
         }
-        arg.leafSideElementData.map((elementData, index) => {
-            csvWriteHashArray.push([`LeafSideElem(${index + 1}): TagName`, elementData["tagName"]]);
+        for (var index = 0; index < configs.adoptRange.leaf; index++) {
+            csvWriteHashArray.push([`LeafSideElem(${index + 1}): TagName`, arg.leafSideElementData[index]["tagName"]]);
             configs.elementDataCollection.attributes.map((attribute) => {
-                csvWriteHashArray.push([`LeafSideElem(${index + 1}): ${attribute}`, elementData[attribute]]);
+                csvWriteHashArray.push([`LeafSideElem(${index + 1}): ${attribute}`, arg.leafSideElementData[index][attribute]]);
             });
-        });
-        arg.rootSideElementData.map((elementData, index) => {
-            csvWriteHashArray.push([`RootSideElem(-${index + 1}): TagName`, elementData["tagName"]]);
+        }
+        for (var index = 0; index < configs.adoptRange.root; index++) {
+            csvWriteHashArray.push([`RootSideElem(-${index + 1}): TagName`, arg.rootSideElementData[index]["tagName"]]);
             configs.elementDataCollection.attributes.map((attribute) => {
-                csvWriteHashArray.push([`RootSideElem(-${index + 1}): ${attribute}`, elementData[attribute]]);
+                csvWriteHashArray.push([`RootSideElem(-${index + 1}): ${attribute}`, arg.rootSideElementData[index][attribute]]);
             });
-        });
+        }
+        csvWriteHashArray.push(["LFHF", 0.0]);
         csvFormatStream.write(csvWriteHashArray);
     }
 });
 
-// AppMessage Thru
+// Thru app messages //////////////////////////////////////////////////////////
 ipcMain.on("AppMessage", (event, arg) => {
     mainWindow.webContents.send("AppMessage", arg);
 });
+
+///////////////////////////////////////////////////////////////////////////////
+//                                 WebSocket                                 //
+///////////////////////////////////////////////////////////////////////////////
+// Initialize a websocket instance
+const InitializeWSClient = (path) => {
+    // Init ///////////////////////////////////////////////////////////////////
+    websocket = new ws.WebSocket(path, {
+        perMessageDeflate: false
+    });
+    isWaitingForFixationEnded = false;
+    // Handlers ///////////////////////////////////////////////////////////////
+    websocket.on("open", () => {
+        console.log("connected to ws server");
+        mainWindow.webContents.send("AppMessage", {
+            message: "データサーバに接続しました",
+            type: "info"
+        });
+        isWebSocketConnected = true;
+    });
+    websocket.on("close", () => {
+        console.log("disconnected to ws server");
+        mainWindow.webContents.send("AppMessage", {
+            message: "データサーバを切断しました",
+            type: "info"
+        });
+        isWebSocketConnected = false;
+    });
+    websocket.on("error", () => {
+        console.log("error with ws server");
+        mainWindow.webContents.send("AppMessage", {
+            message: "データサーバに接続できません",
+            type: "error"
+        });
+        isWebSocketConnected = false;
+    });
+    websocket.on("message", (msg) => {
+        const messageStr = msg.toString();
+        const messageArray = messageStr.split(",");
+
+        // Check
+        if (messageStr[0] !== 'e') {
+            console.log("Message received via WebSocket has no event id");
+            return;
+        }
+
+        // Debug
+        //console.log("received from ws server:");
+        //console.log(messageArray); // Content
+        //console.log("CurrentUnixTime: " + Date.now()); // UnixTime (Electron)
+
+        // Switch with WSEventID
+        const eventID = parseInt(messageArray[0].substring(1), 10);
+        if (eventID === NaN) {
+            console.log("Received WSEventID is NaN");
+            return;
+        }
+        // Parse messages from TobiiSBETServer
+        switch (eventID) {
+        case WSEventID.FixationStarted: {
+            // FixationStarted event //////////////////////////////////////////
+            const dataCount = parseInt(messageArray[1].substring(1), 10);
+            if (dataCount === NaN) {
+                console.log("Received dataCount is NaN");
+                return;
+            }
+            const parsedDataArray = new Array(dataCount);
+            for (var dataNumber = 0; dataNumber < dataCount; dataNumber++) {
+                const unixTimeStr = messageArray[2 + dataNumber * 3].substring(1);
+                const unixTime = parseInt(unixTimeStr, 10);
+                if (unixTime === NaN) {
+                    console.log("Received unixTime is NaN");
+                    return;
+                }
+                const screenXStr = messageArray[3 + dataNumber * 3].substring(1);
+                const screenX = parseInt(screenXStr, 10);
+                if (screenX === NaN) {
+                    console.log("Received screenX is NaN");
+                    return;
+                }
+                const screenYStr = messageArray[4 + dataNumber * 3].substring(1);
+                const screenY = parseInt(screenYStr, 10);
+                if (screenY === NaN) {
+                    console.log("Received screenY is NaN");
+                    return;
+                }
+                const parsedData = {
+                    time: unixTime,
+                    x: screenX,
+                    y: screenY
+                };
+                parsedDataArray[dataNumber] = parsedData;
+            }
+
+            // Send to viewer if necessary
+            if (isViewerAvailable) {
+                viewerWindow.webContents.send("EyeDataFromMainToViewer", {
+                    id: eventID,
+                    n: dataCount,
+                    data: parsedDataArray
+                });
+            }
+
+            isWaitingForFixationEnded = true;
+            break;
+        }
+        case WSEventID.FixationEnded: {
+            // FixationEnded event ////////////////////////////////////////////
+            const parsedDataArray = new Array(1);
+            const unixTimeStr = messageArray[1].substring(1);
+            const unixTime = parseInt(unixTimeStr, 10);
+            if (unixTime === NaN) {
+                console.log("Received unixTime is NaN");
+                return;
+            }
+            const screenXStr = messageArray[2].substring(1);
+            const screenX = parseInt(screenXStr, 10);
+            if (screenX === NaN) {
+                console.log("Received screenX is NaN");
+                return;
+            }
+            const screenYStr = messageArray[3].substring(1);
+            const screenY = parseInt(screenYStr, 10);
+            if (screenY === NaN) {
+                console.log("Received screenY is NaN");
+                return;
+            }
+            const parsedData = {
+                time: unixTime,
+                x: screenX,
+                y: screenY
+            };
+            parsedDataArray[0] = parsedData;
+            // Send to viewer if necessary
+            if (isViewerAvailable && isWaitingForFixationEnded) {
+                viewerWindow.webContents.send("EyeDataFromMainToViewer", {
+                    id: eventID,
+                    n: 1,
+                    data: parsedDataArray
+                });
+                isWaitingForFixationEnded = false;
+            }
+            break;
+        }
+        case WSEventID.LFHFComputed: {
+            // LFHFComputed event /////////////////////////////////////////////
+            const unixTimeStr = messageArray[1].substring(1);
+            const unixTime = parseInt(unixTimeStr, 10);
+            if (unixTime === NaN) {
+                console.log("Received unixTime is NaN");
+                return;
+            }
+            const lfhfStr = messageArray[2].substring(1);
+            const lfhf = parseFloat(lfhfStr); // F3
+            if (lfhf === NaN) {
+                console.log("Received lfhf is NaN");
+                return;
+            }
+            // const parsedDataArray = [];
+            // const parsedData = {
+            //     time: unixTime,
+            //     lfhf: lfhf
+            // };
+            // parsedDataArray.push(parsedData);
+            // // Send to viewer if necessary
+            // if (isViewerAvailable) {
+            //     viewerWindow.webContents.send("EyeDataFromMainToViewer", {
+            //         id: eventID,
+            //         n: 1,
+            //         data: parsedDataArray
+            //     });
+            // }
+            // Write to csv
+            if (isRecording && configs && csvFormatStream && csvSaveStream) {
+                let csvWriteHashArray = [];
+                csvWriteHashArray.push(["EventID", eventID]);
+                if (configs.generalDataCollection.timestamp) {
+                    csvWriteHashArray.push(["Timestamp(App)", timekeeper.getElapsedTime()]);
+                    csvWriteHashArray.push(["Timestamp(Server)", unixTime]);
+                }
+                if (configs.generalDataCollection.coordinates) {
+                    csvWriteHashArray.push(["X", 0]);
+                    csvWriteHashArray.push(["Y", 0]);
+                }
+                if (configs.generalDataCollection.overlapAll) {
+                    csvWriteHashArray.push(["Element Overlap (All)", ""]);
+                }
+                if (configs.generalDataCollection.overlapFiltered) {
+                    csvWriteHashArray.push(["Element Overlap (Filtered)", ""]);
+                }
+                for (var index = 0; index < configs.adoptRange.leaf; index++) {
+                    csvWriteHashArray.push([`LeafSideElem(${index + 1}): TagName`, ""]);
+                    configs.elementDataCollection.attributes.map((attribute) => {
+                        csvWriteHashArray.push([`LeafSideElem(${index + 1}): ${attribute}`, ""]);
+                    });
+                }
+                for (var index = 0; index < configs.adoptRange.root; index++) {
+                    csvWriteHashArray.push([`RootSideElem(-${index + 1}): TagName`, ""]);
+                    configs.elementDataCollection.attributes.map((attribute) => {
+                        csvWriteHashArray.push([`RootSideElem(-${index + 1}): ${attribute}`, ""]);
+                    });
+                }
+                csvWriteHashArray.push(["LFHF", lfhf]);
+                csvFormatStream.write(csvWriteHashArray);
+            }
+            break;
+        }
+        default: {
+            console.log("Received WSEventID is unknown");
+            break;
+        }
+        }
+    });
+};

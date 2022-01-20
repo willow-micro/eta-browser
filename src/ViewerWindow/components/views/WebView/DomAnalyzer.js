@@ -10,8 +10,10 @@
 const { ipcRenderer } = require('electron');
 const { debounce } = require('throttle-debounce');
 const getXPath = require('get-xpath');
+const WSEventID = require('./WSEventID.js');
 
 let configs = null;
+let isWaitingForFixationEnded = false;
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOMAnalyzer was loaded.");
@@ -19,34 +21,64 @@ document.addEventListener('DOMContentLoaded', function () {
     ipcRenderer.on("InitializeWebViewFromViewer", (event, arg) => {
         configs = arg.configs;
         console.log(configs);
+        isWaitingForFixationEnded = false;
     });
-    ipcRenderer.on("GazeDataFromViewerToWebView", (event, arg) => {
-        console.log("Received Gaze Data");
-        console.log(arg);
-        const dataCount = arg.length;
-        const xPathList = arg.map(data => {
-            const viewerX = data.x - window.screenX;
-            const viewerY = data.y - window.screenY;
-            const element = document.elementsFromPoint(viewerX, viewerY)[0];
-            if (element != null && element != undefined) {
-                return getXPath(element);
-            } else {
-                return "";
-            }
-        });
-        console.log(xPathList);
-        const majorityXPath = getMajorityElement(xPathList);
-        const majorityDataIndex = xPathList.indexOf(majorityXPath);
-        console.log("Majority: " + majorityDataIndex + " (" + majorityXPath + ")");
+    ipcRenderer.on("EyeDataFromViewerToWebView", (event, arg) => {
+        console.log("Received Eye Data. EventID: " + arg.id);
 
-        // If configs are available, send dom data
-        if (configs && majorityXPath !== "") {
-            const targetViewerX = arg[majorityDataIndex].x - window.screenX;
-            const targetViewerY = arg[majorityDataIndex].y - window.screenY;
-            sendDomDataAt(targetViewerX, targetViewerY);
+        const eventID = arg.id;
+        const dataCount = arg.n;
+
+        switch (eventID) {
+        case WSEventID.FixationStarted: {
+            console.log("FixationStarted");
+            console.log(arg.data);
+            var elementXPathList = new Array(dataCount);
+            for (var i = 0; i < dataCount; i++) {
+                const element = getSingleElementAt(arg.data[i].x, arg.data[i].y);
+                if (element == null) {
+                    return;
+                }
+                elementXPathList[i] = getXPath(element);
+            }
+            const majorityXPath = getMajorityElement(elementXPathList);
+            const majorityIndex = elementXPathList.indexOf(majorityXPath);
+            console.log("majority: " + majorityIndex + " (" + majorityXPath + ")");
+            if (configs && majorityXPath !== "") {
+                sendDomDataAt(eventID, arg.data[majorityIndex].x, arg.data[majorityIndex].y, arg.data[majorityIndex].time);
+                isWaitingForFixationEnded = true;
+            }
+            break;
+        }
+        case WSEventID.FixationEnded: {
+            console.log("FixationEnded");
+            if (configs && isWaitingForFixationEnded) {
+                sendDomDataAt(eventID, arg.data[0].x, arg.data[0].y, arg.data[0].time);
+                isWaitingForFixationEnded = false;
+            }
+            break;
+        }
+        case WSEventID.LFHFComputed: {
+            console.log("LFHFComputed");
+            break;
+        }
+        default: {
+            break;
+        }
         }
     });
 });
+
+// Get the deepest element at specified position if exist
+function getSingleElementAt(xPos, yPos) {
+    const viewerX = xPos - window.screenX;
+    const viewerY = yPos - window.screenY;
+    const element = document.elementsFromPoint(viewerX, viewerY)[0];
+    if (element == null || element == undefined) {
+        return null;
+    }
+    return element;
+}
 
 // Get the majority element from an array
 // Using Boyer–Moore majority vote algorithm
@@ -67,9 +99,12 @@ function getMajorityElement(list) {
 }
 
 // Get DOM data and Send it
-function sendDomDataAt(xPos, yPos) {
+function sendDomDataAt(eventID, xPos, yPos, serverTime) {
+    const viewerX = xPos - window.screenX;
+    const viewerY = yPos - window.screenY;
+
     // Get Elements (Array): Deeper Elements First
-    const elements = document.elementsFromPoint(xPos, yPos);
+    const elements = document.elementsFromPoint(viewerX, viewerY);
 
     // Filtering Elements with configs
     const filteredElements = elements.filter(element => {
@@ -85,7 +120,6 @@ function sendDomDataAt(xPos, yPos) {
         }
         return false;
     });
-
 
     // Coordinates
     let coordinates = null;
@@ -122,55 +156,63 @@ function sendDomDataAt(xPos, yPos) {
     // Leaf Side Elements from Filtered Elements
     let leafSideElementData = null;
     if (configs.adoptRange.leaf > 0) {
-        leafSideElementData = [];
+        leafSideElementData = new Array(configs.adoptRange.leaf);
         for (let i = 0; i < configs.adoptRange.leaf; i++) {
-            // If the index is overflow
-            if (i >= filteredElements.length) {
-                break;
-            }
             let elementData = {};
             // tagName
             if (configs.elementDataCollection.tagName) {
-                elementData["tagName"] = filteredElements[i].tagName.toLowerCase();
+                if (i < filteredElements.length) {
+                    elementData["tagName"] = filteredElements[i].tagName.toLowerCase();
+                } else {
+                    elementData["tagName"] = "";
+                }
             }
             // Attributes
             for (let j = 0; j < configs.elementDataCollection.attributes.length; j++) {
-                elementData[configs.elementDataCollection.attributes[j]] = filteredElements[i].getAttribute(configs.elementDataCollection.attributes[j]);
+                if (i < filteredElements.length) {
+                    elementData[configs.elementDataCollection.attributes[j]] = filteredElements[i].getAttribute(configs.elementDataCollection.attributes[j]);
+                } else {
+                    elementData[configs.elementDataCollection.attributes[j]] = "";
+                }
             }
-            leafSideElementData.push(elementData);
+            leafSideElementData[i] = elementData;
         }
     }
     // Root Side Elements from Filtered Elements
     let rootSideElementData = null;
     if (configs.adoptRange.root > 0) {
-        rootSideElementData = [];
+        rootSideElementData = new Array(configs.adoptRange.root);
         for (let i = 0; i < configs.adoptRange.root; i++) {
-            // If the index is overflow
-            if (i >= filteredElements.length) {
-                break;
-            }
             let elementData = {};
             // tagName
             if (configs.elementDataCollection.tagName) {
-                elementData["tagName"] = filteredElements[filteredElements.length - 1 - i].tagName.toLowerCase();
+                if (i < filteredElements.length) {
+                    elementData["tagName"] = filteredElements[filteredElements.length - 1 - i].tagName.toLowerCase();
+                } else {
+                    elementData["tagName"] = "";
+                }
             }
             // Attributes
             for (let j = 0; j < configs.elementDataCollection.attributes.length; j++) {
-                elementData[configs.elementDataCollection.attributes[j]] = filteredElements[filteredElements.length - 1 - i].getAttribute(configs.elementDataCollection.attributes[j]);
+                if (i < filteredElements.length) {
+                    elementData[configs.elementDataCollection.attributes[j]] = filteredElements[filteredElements.length - 1 - i].getAttribute(configs.elementDataCollection.attributes[j]);
+                } else {
+                    elementData[configs.elementDataCollection.attributes[j]] = "";
+                }
             }
-            rootSideElementData.push(elementData);
+            rootSideElementData[i] = elementData;
         }
     }
 
-    console.log(leafSideElementData[0]["tagName"]);
-
     // Send DOM Data
     ipcRenderer.sendToHost("DOMDataFromWebViewToViewer", {
+        eventID: eventID,
         coordinates: coordinates,
         elemOverlapAll: elemOverlapAll,
         elemOverlapFiltered: elemOverlapFiltered,
         leafSideElementData: leafSideElementData,
-        rootSideElementData: rootSideElementData
+        rootSideElementData: rootSideElementData,
+        serverTime: serverTime
     });
 }
 
