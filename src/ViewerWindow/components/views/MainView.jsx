@@ -49,11 +49,11 @@ const WebView = React.forwardRef((props, ref) => {
         // Attension: Preload attribute needs absolute path on the development computer
         return (
             <webview preload="file:///Users/noka/Workspace/Node/eta-browser/src/ViewerWindow/components/views/WebView/DomAnalyzer.js"
-                     ref={ ref }
-                     src={ props.url }
-                     style={ { height: '100%', width: '100%' } }
-                     nodeintegration="true"
-                     nodeintegrationinsubframes="true" />
+                ref={ ref }
+                src={ props.url }
+                style={ { height: '100%', width: '100%' } }
+                nodeintegration="true"
+                nodeintegrationinsubframes="true" />
         );
     }
 });
@@ -152,7 +152,25 @@ const MainView = () => {
 
     // JSX
     return (
-        <WebView url={ viewerDestinationURL } ref={ webViewRef } />
+        <div style={{
+            height: '100%',
+            width: '100%',
+            position: 'relative'
+        }}>
+          <div style={{
+              position: 'absolute',
+              height: '50%',
+              width: '50%',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              margin: 'auto'
+          }} >
+            <WebView url={ viewerDestinationURL }
+                     ref={ webViewRef } />
+          </div>
+        </div>
     );
 };
 
