@@ -24,15 +24,15 @@ document.addEventListener('DOMContentLoaded', function () {
         isWaitingForFixationEnded = false;
     });
     ipcRenderer.on("EyeDataFromViewerToWebView", (event, arg) => {
-        console.log("Received Eye Data. EventID: " + arg.id);
+        //console.log("Received Eye Data. EventID: " + arg.id);
 
         const eventID = arg.id;
         const dataCount = arg.n;
 
         switch (eventID) {
         case WSEventID.FixationStarted: {
-            console.log("FixationStarted");
-            console.log(arg.data);
+            // console.log("FixationStarted");
+            // console.log(arg.data);
             var elementXPathList = new Array(dataCount);
             for (var i = 0; i < dataCount; i++) {
                 const element = getSingleElementAt(arg.data[i].x, arg.data[i].y);
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             const majorityXPath = getMajorityElement(elementXPathList);
             const majorityIndex = elementXPathList.indexOf(majorityXPath);
-            console.log("majority: " + majorityIndex + " (" + majorityXPath + ")");
+            // console.log("majority: " + majorityIndex + " (" + majorityXPath + ")");
             if (configs && majorityXPath !== "") {
                 sendDomDataAt(eventID, arg.data[majorityIndex].x, arg.data[majorityIndex].y, arg.data[majorityIndex].time);
                 isWaitingForFixationEnded = true;
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
             break;
         }
         case WSEventID.FixationEnded: {
-            console.log("FixationEnded");
+            // console.log("FixationEnded");
             if (configs && isWaitingForFixationEnded) {
                 sendDomDataAt(eventID, arg.data[0].x, arg.data[0].y, arg.data[0].time);
                 isWaitingForFixationEnded = false;
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
             break;
         }
         case WSEventID.LFHFComputed: {
-            console.log("LFHFComputed");
+            // console.log("LFHFComputed");
             break;
         }
         default: {
